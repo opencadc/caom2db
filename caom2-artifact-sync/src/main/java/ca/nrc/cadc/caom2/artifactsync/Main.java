@@ -126,6 +126,7 @@ public class Main
             }
 
             boolean dryrun = am.isSet("dryrun");
+            boolean full = am.isSet("full");
 
             // setup optional authentication for harvesting from a web service
             Subject subject = null;
@@ -142,7 +143,6 @@ public class Main
                 AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
                 log.info("authentication using: " + meth);
             }
-
 
             String dbParam = am.getValue("database");
             if (dbParam == null)
@@ -188,12 +188,11 @@ public class Main
                 System.exit(-1);
             }
 
-
             // Waiting for a public constructor in ArtifactDAO.
-            //ArtifactDAO artifactDAO = new ArtifactDAO();
+            // ArtifactDAO artifactDAO = new ArtifactDAO();
 
-            Runnable harvester = new ArtifactHarvester(/*artifactDAO,*/ dbInfo, artifactStore, dryrun);
-            Runnable downloader = new DownloadArtifactFiles(/*artifactDAO,*/ dbInfo, artifactStore, dryrun, nthreads);
+            Runnable harvester = new ArtifactHarvester(/* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads, full);
+            Runnable downloader = new DownloadArtifactFiles(/* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads, full);
 
             if (subject != null)
             {

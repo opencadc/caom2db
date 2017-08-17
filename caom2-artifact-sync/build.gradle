@@ -29,6 +29,7 @@ dependencies {
     compile 'org.opencadc:caom2:[2.3.0,)'
     compile 'org.opencadc:caom2persistence:[2.3.3,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
+    compile 'org.opencadc:caom2harvester:[2.3.3,)'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
