@@ -169,6 +169,8 @@ public class Main
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
+            String asCollection = am.getValue("collection");
+
             String asClassName = am.getValue("artifactStore");
             ArtifactStore artifactStore = null;
             if (asClassName == null)
@@ -191,7 +193,7 @@ public class Main
             // Waiting for a public constructor in ArtifactDAO.
             // ArtifactDAO artifactDAO = new ArtifactDAO();
 
-            Runnable harvester = new ArtifactHarvester(/* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads, full);
+            Runnable harvester = new ArtifactHarvester(asCollection, /* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads, full);
             Runnable downloader = new DownloadArtifactFiles(/* artifactDAO, */ dbInfo, artifactStore, dryrun, nthreads, full);
 
             if (subject != null)

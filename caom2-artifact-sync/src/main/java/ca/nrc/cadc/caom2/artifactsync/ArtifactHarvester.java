@@ -87,6 +87,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.harvester.Harvester;
@@ -118,14 +119,16 @@ public class ArtifactHarvester extends Harvester
     private Integer batchSize = null;
     private Date maxDate;
     private int nthreads = 1;
+    private String collection;
 
-    public ArtifactHarvester(/* ArtifactDAO artifactDAO, */ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int nthreads, boolean full)
+    public ArtifactHarvester(String collection, /* ArtifactDAO artifactDAO, */ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int nthreads, boolean full)
     {
         // this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
         this.dryrun = dryrun;
         this.full = full;
         this.nthreads = nthreads;
+        this.collection = collection;
 
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(
                 /* artifactDAO.getDatasource() */null, dbInfo[1], dbInfo[2]);
@@ -190,19 +193,19 @@ public class ArtifactHarvester extends Harvester
 
             if (!full) // search in skipped table
             {
-                List<SkippedWrapperURI<Observation>> entityList = getSkipped(null);
+                List<ObservationState> partialList = destObservationDAO.getObservationList(collection, null, null, null);
 
-                if (entityList != null && !entityList.isEmpty())
+                if (partialList != null && !partialList.isEmpty())
                 {
-                    log.info("found o: " + entityList.size());
+                    log.info("found: " + partialList.size());
 
-                    ListIterator<SkippedWrapperURI<Observation>> iter1 = entityList.listIterator();
+                    ListIterator<ObservationState> iter1 = partialList.listIterator();
 
                     while (iter1.hasNext())
                     {
-                        SkippedWrapperURI<Observation> ow = iter1.next();
-                        Observation o = ow.entity;
-                        HarvestSkipURI hs = ow.skip;
+                        ObservationState os = iter1.next();
+                        Observation o = destObservationDAO.get(os.getURI());
+                        // os.maxLastModified;
                         iter1.remove(); // allow garbage collection during loop
 
                         if (o != null)
