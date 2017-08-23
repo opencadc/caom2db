@@ -16,6 +16,11 @@ import org.apache.log4j.Logger;
 import ca.nrc.cadc.caom2.artifactsync.esacdb.ConfigProperties;
 import ca.nrc.cadc.caom2.artifactsync.esacdb.JdbcSingleton;
 
+/**
+ *
+ * @author jduran
+ *
+ */
 public class EsacChecksumManagement
 {
     private static EsacChecksumManagement instance = null;

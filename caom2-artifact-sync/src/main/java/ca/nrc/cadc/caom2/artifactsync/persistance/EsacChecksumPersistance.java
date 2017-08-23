@@ -2,6 +2,11 @@ package ca.nrc.cadc.caom2.artifactsync.persistance;
 
 import java.net.URI;
 
+/**
+ *
+ * @author jduran
+ *
+ */
 public class EsacChecksumPersistance
 {
     private URI artifactURI;

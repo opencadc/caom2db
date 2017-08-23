@@ -2,6 +2,11 @@ package ca.nrc.cadc.caom2.artifactsync.esacdb;
 
 import java.beans.PropertyVetoException;
 
+/**
+ *
+ * @author jduran
+ *
+ */
 public class JdbcSingleton extends Jdbc
 {
 
@@ -10,20 +15,20 @@ public class JdbcSingleton extends Jdbc
         super();
     }
 
-    private static JdbcSingleton INSTANCE = null;
+    private static JdbcSingleton instance = null;
 
     private synchronized static void createInstance() throws PropertyVetoException
     {
-        if (INSTANCE == null)
+        if (instance == null)
         {
-            INSTANCE = new JdbcSingleton();
+            instance = new JdbcSingleton();
         }
     }
 
     public static JdbcSingleton getInstance() throws PropertyVetoException
     {
         createInstance();
-        return INSTANCE;
+        return instance;
     }
 
 }

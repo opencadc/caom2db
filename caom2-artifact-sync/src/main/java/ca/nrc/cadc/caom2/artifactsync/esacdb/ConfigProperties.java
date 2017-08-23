@@ -7,6 +7,11 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *
+ * @author jduran
+ *
+ */
 public class ConfigProperties
 {
 

@@ -6,6 +6,11 @@ import java.sql.SQLException;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+/**
+ *
+ * @author jduran
+ *
+ */
 public class Jdbc
 {
     protected static final String DB_URL_PROP = "esac.tools.db.url";
