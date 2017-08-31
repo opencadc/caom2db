@@ -113,10 +113,10 @@ public class Main
                 usage();
                 System.exit(1);
             }
-            String[] destDS = destination.split("[.]");
+            String[] destDS = destination.split("[#]");
             if (destDS.length != 3)
             {
-                log.warn("malformed --destination value, found " + destination + " expected: server.database.schema");
+                log.warn("malformed --destination value, found " + destination + " expected: server#database#schema");
                 usage();
                 System.exit(1);
             }
@@ -130,7 +130,7 @@ public class Main
             boolean nosrv = (resourceID == null || resourceID.trim().length() == 0);
             if (nosrc && nosrv )
             {
-                log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier>");
+                log.warn("missing required argument: --source=<server#database#schema> | --resourceID=<identifier>");
                 usage();
                 System.exit(1);
             }
@@ -160,10 +160,10 @@ public class Main
             }
             else
             {
-                String[] srcDS = source.split("[.]");
+                String[] srcDS = source.split("[#]");
                 if (srcDS.length != 3)
                 {
-                    log.warn("malformed --source value, found " + source + " expected: server.database.schema");
+                    log.warn("malformed --source value, found " + source + " expected: server#database#schema");
                     usage();
                     System.exit(1);
                 }
@@ -307,9 +307,9 @@ public class Main
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2harvester [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
-        sb.append("\n         --destination=<server.database.schema> : persist output directly to a databsee server");
+        sb.append("\n         --destination=<server#database#schema> : persist output directly to a databsee server");
         
-        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema>");
+        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server#database#schema>");
         sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
         sb.append("\n         --threads : number  of threads used to read observation documents (default: 1)");
         sb.append("\n         --source : harvest directly from a database server");

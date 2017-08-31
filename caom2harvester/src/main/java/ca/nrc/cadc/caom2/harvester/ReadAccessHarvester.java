@@ -42,9 +42,9 @@ public class ReadAccessHarvester extends Harvester
      * @param entityClass
      *            the type of entity to harvest
      * @param src
-     *            source server.database.schema
+     *            source server#database#schema
      * @param dest
-     *            destination server.database.schema
+     *            destination server#database#schema
      * @param batchSize
      *            ignored, always full list
      * @param full
