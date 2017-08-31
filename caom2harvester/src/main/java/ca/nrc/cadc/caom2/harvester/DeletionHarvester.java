@@ -53,9 +53,9 @@ public class DeletionHarvester extends Harvester implements Runnable
      * Constructor.
      *
      * @param src
-     *            source server.database.schema
+     *            source server#database#schema
      * @param dest
-     *            destination server.database.schema
+     *            destination server#database#schema
      * @param entityClass
      *            the class specifying what should be deleted
      * @param batchSize
