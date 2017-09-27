@@ -176,7 +176,7 @@ public class InitDatabase
             for (String fname : ddls)
             {
                 log.info("process file: " + fname);
-                List<String> statements = parseDDL(fname);
+                List<String> statements = parseDDL(fname, schema);
                 for (String sql : statements)
                 {
                     if (upgrade)
@@ -224,7 +224,7 @@ public class InitDatabase
         }
     }
     
-    static List<String> parseDDL(String fname)
+    static List<String> parseDDL(String fname, String schema)
         throws IOException
     {
         List<String> ret = new ArrayList<>();
@@ -257,6 +257,9 @@ public class InitDatabase
                     if (eos)
                     {
                         String st = sb.toString();
+                        
+                        st = st.replaceAll("<schema>", schema);
+                        
                         log.debug("statement: " + st);
                         ret.add(st);
                         sb = new StringBuilder();
