@@ -96,7 +96,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
-import ca.nrc.cadc.caom2.persistence.DatabaseObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 
 public class ArtifactHarvester extends Harvester
 {
@@ -105,7 +105,7 @@ public class ArtifactHarvester extends Harvester
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
-    private DatabaseObservationDAO destObservationDAO;
+    private ObservationDAO destObservationDAO;
 
     // private ArtifactDAO artifactDAO;
     private ArtifactStore artifactStore;
@@ -139,7 +139,7 @@ public class ArtifactHarvester extends Harvester
     private void init() throws IOException
     {
         Map<String, Object> config2 = getConfigDAO(dest);
-        this.destObservationDAO = new DatabaseObservationDAO();
+        this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(config2);
         // destObservationDAO.setComputeLastModified(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
@@ -298,7 +298,9 @@ public class ArtifactHarvester extends Harvester
     protected void initHarvestState(DataSource ds, Class c)
     {
         super.initHarvestState(ds, c);
-        this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2], batchSize);
+        // TODO: investigate why this is failing
+        // this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2],
+        // batchSize);
     }
 
     private static class Progress
