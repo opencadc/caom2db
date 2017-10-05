@@ -69,277 +69,157 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.harvester.Harvester;
-import ca.nrc.cadc.caom2.harvester.SkippedWrapperURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 
-public class ArtifactHarvester extends Harvester
+public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>
 {
 
-    private static final Integer SKIPDAO_BATCH_SIZE = Integer.valueOf(1000);
+    public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
+    public static final String STATE_CLASS = Artifact.class.getSimpleName();
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
-    private ObservationDAO destObservationDAO;
-
-    // private ArtifactDAO artifactDAO;
+    private ArtifactDAO artifactDAO;
     private ArtifactStore artifactStore;
     private HarvestStateDAO harvestStateDAO;
-    private HarvestSkipURIDAO harvestSkip;
-
+    private HarvestSkipURIDAO harvestSkipURIDAO;
+    private String collection; // Will be used in the future
     private boolean dryrun;
-    private boolean full;
-    private Date startDate;
-    private boolean firstIteration = true;
-    private Integer batchSize = null;
-    private Date maxDate;
-    private int nthreads = 1;
-    private String collection;
+    private int batchSize;
+    private String source;
 
-    public ArtifactHarvester(String collection, /* ArtifactDAO artifactDAO, */ String[] dbInfo, ArtifactStore artifactStore, boolean dryrun, int nthreads, boolean full)
+    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, String collection, boolean dryrun, int batchSize)
     {
-        // this.artifactDAO = artifactDAO;
+        this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
-        this.dryrun = dryrun;
-        this.full = full;
-        this.nthreads = nthreads;
         this.collection = collection;
+        this.dryrun = dryrun;
+        this.batchSize = batchSize;
 
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(
-                /* artifactDAO.getDatasource() */null, dbInfo[1], dbInfo[2]);
-        this.harvestSkip = new HarvestSkipURIDAO(
-                /* artifactDAO.getDatasource() */null, dbInfo[1], dbInfo[2], SKIPDAO_BATCH_SIZE);
-    }
+        this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
 
-    private void init() throws IOException
-    {
-        Map<String, Object> config2 = getConfigDAO(dest);
-        this.destObservationDAO = new ObservationDAO();
-        destObservationDAO.setConfig(config2);
-        // destObservationDAO.setComputeLastModified(false); // copy as-is
-        initHarvestState(destObservationDAO.getDataSource(), Observation.class);
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
     }
 
     @Override
-    public void run()
+    public Integer run() throws Exception
     {
-        try
-        {
-            init();
-            // TODO: Use the ArtifactDAO to find artifacts with
-            // maxLastModified > last run.
 
-            // TODO: for each, use the ArtifactStore to see if it already
-            // has the artifact.
-
-            // TODO: save the ones that are missing using the HarvestSkipURIDAO
-
-            log.info("START \n");
-
-            doit();
-
-            log.info("DONE \n");
-
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    private Progress doit()
-    {
-        Progress ret = new Progress();
-
-        long t = System.currentTimeMillis();
-        long tState = -1;
-        long tQuery = -1;
-        long tTransaction = -1;
+        long downloadCount = 0;
+        long newDownloadCount = 0;
+        int num = 0;
+        Date now = new Date();
 
         try
         {
-            System.gc(); // hint
-            t = System.currentTimeMillis();
+            // Determine the state of the last run
+            HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
 
-            tState = System.currentTimeMillis() - t;
-            t = System.currentTimeMillis();
+            // Use the ArtifactDAO to find artifacts with lastModified > last
+            // artifact processed
+            List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, batchSize);
+            num = artifacts.size();
+            log.info("Found " + num + " artifacts to process.");
 
-            List<Callable<Boolean>> tasks = new ArrayList<Callable<Boolean>>();
-
-            if (!full) // search in skipped table
+            for (Artifact artifact : artifacts)
             {
-                List<ObservationState> partialList = destObservationDAO.getObservationList(collection, null, null, null);
 
-                if (partialList != null && !partialList.isEmpty())
+                // TEMPORARY: For now, to keep the data volume low, only harvest
+                // MAST files that begin with a W, X, Y, or Z
+                List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
+                String path = artifact.getURI().getSchemeSpecificPart();
+                log.debug("Path: " + path);
+                int lastSlashIdx = path.lastIndexOf("/");
+                String fileID = path.substring(lastSlashIdx + 1, path.length());
+                log.debug("FileID: " + fileID);
+                String firstChar = fileID.substring(0, 1).toLowerCase();
+                if (!acceptedFilePrefixes.contains(firstChar))
                 {
-                    log.info("found: " + partialList.size());
-
-                    ListIterator<ObservationState> iter1 = partialList.listIterator();
-
-                    while (iter1.hasNext())
+                    log.debug("Artifact " + artifact.getURI() + " skipped by temporary data volume restriction");
+                }
+                else
+                {
+                    try
                     {
-                        ObservationState os = iter1.next();
-                        Observation o = destObservationDAO.get(os.getURI());
-                        // os.maxLastModified;
-                        iter1.remove(); // allow garbage collection during loop
-
-                        if (o != null)
+                        // only process mast artifacts for now
+                        if ("mast".equalsIgnoreCase(artifact.getURI().getScheme()))
                         {
-                            for (Plane p : o.getPlanes())
+
+                            boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
+                            log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact.contentChecksum + " exists: " + exists);
+                            if (!exists)
                             {
-                                for (Artifact artifact : p.getArtifacts())
+
+                                // see if there's already an entry
+                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                                if (skip == null)
                                 {
-                                    tasks.add(new StoreProcessor(artifact, artifactStore));
+                                    if (!dryrun)
+                                    {
+                                        log.info("--> Adding artifact to skip table: " + artifact.getURI());
+                                        // set the message to be an empty string
+                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
+                                        harvestSkipURIDAO.put(skip);
+                                    }
+                                    else
+                                    {
+                                        log.info("--> Artifact eligible for harvesting: " + artifact.getURI());
+                                    }
+                                    newDownloadCount++;
                                 }
+                                else
+                                {
+                                    log.debug("Artifact already exists in skip table.");
+                                }
+                                downloadCount++;
                             }
-                        }
-                    }
-                }
-            }
-            else // full sync
-            {
-                List<Observation> fullList = destObservationDAO.getList(Observation.class, null, null, null);
-                if (fullList != null && !fullList.isEmpty())
-                {
-                    for (Observation o : fullList)
-                    {
-                        for (Plane p : o.getPlanes())
-                        {
-                            for (Artifact artifact : p.getArtifacts())
+
+                            if (!dryrun)
                             {
-                                tasks.add(new StoreProcessor(artifact, artifactStore));
+                                state.curLastModified = artifact.getLastModified();
+                                harvestStateDAO.put(state);
+                                log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
                             }
+                        }
+                        else
+                        {
+                            log.debug("Skipping non-MAST artifact: " + artifact.getURI());
+                        }
+                    }
+                    catch (Throwable t)
+                    {
+                        log.error("Failed to determine if artifact " + artifact.getURI() + " exists.", t);
+                        if (!dryrun)
+                        {
+                            log.info("--> Adding artifact to skip table: " + artifact.getURI());
+                            // set the message to be an empty string
+                            HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
+                            harvestSkipURIDAO.put(skip);
                         }
                     }
                 }
             }
-            ExecutorService taskExecutor = null;
-            try
-            {
-                // Run tasks in a fixed thread pool
-                taskExecutor = Executors.newFixedThreadPool(nthreads);
-                List<Future<Boolean>> futures;
-
-                futures = taskExecutor.invokeAll(tasks);
-
-                for (Future<Boolean> f : futures)
-                {
-                    Boolean res = f.get();
-                }
-            }
-            catch (InterruptedException | ExecutionException e)
-            {
-                log.error("Error when executing thread in ThreadPool: " + e.getMessage() + " caused by: " + e.getCause().toString());
-            }
-            finally
-            {
-                if (taskExecutor != null)
-                {
-                    taskExecutor.shutdown();
-                }
-            }
-
+            return num;
         }
         finally
         {
-            tTransaction = System.currentTimeMillis() - t;
-            log.debug("time to get HarvestState: " + tState + "ms");
-            log.debug("time to run ObservationListQuery: " + tQuery + "ms");
-            log.debug("time to run transactions: " + tTransaction + "ms");
+            log.info("Discovered " + downloadCount + " total artifacts eligible for download. (" + newDownloadCount + " new)");
         }
-        return ret;
+
     }
 
-    private List<SkippedWrapperURI<Observation>> getSkipped(Date start)
-    {
-        log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
-
-        List<SkippedWrapperURI<Observation>> ret = new ArrayList<SkippedWrapperURI<Observation>>(skip.size());
-        for (HarvestSkipURI hs : skip)
-        {
-            log.info("hs.getSkipID(): " + hs.getSkipID());
-            log.info("start: " + start);
-
-            Observation obs = destObservationDAO.get(new ObservationURI(hs.getSkipID()));
-
-            if (obs != null)
-                ret.add(new SkippedWrapperURI<Observation>(obs, hs));
-        }
-        return ret;
-    }
-
-    @Override
-    protected void initHarvestState(DataSource ds, Class c)
-    {
-        super.initHarvestState(ds, c);
-        // TODO: investigate why this is failing
-        // this.harvestSkip = new HarvestSkipURIDAO(ds, dest[1], dest[2],
-        // batchSize);
-    }
-
-    private static class Progress
-    {
-
-        boolean done = false;
-        boolean abort = false;
-        int found = 0;
-        int ingested = 0;
-        int failed = 0;
-        int handled = 0;
-
-        @Override
-        public String toString()
-        {
-            return found + " ingested: " + ingested + " failed: " + failed;
-        }
-    }
-
-    private class StoreProcessor implements Callable<Boolean>
-    {
-        private Artifact artifact = null;
-        private ArtifactStore artifactStore = null;
-
-        public StoreProcessor(Artifact a, ArtifactStore as)
-        {
-            this.artifact = a;
-            this.artifactStore = as;
-        }
-
-        private Boolean processArtifact()
-        {
-            return true;
-        }
-
-        @Override
-        public Boolean call() throws Exception
-        {
-            return processArtifact();
-        }
-    }
 }
