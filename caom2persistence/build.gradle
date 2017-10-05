@@ -3,6 +3,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
+    id 'checkstyle'
 }
 
 repositories {
@@ -14,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.7'
+version = '2.3.8'
 
 dependencies {
     compile 'log4j:log4j:1.2.+'
@@ -31,3 +32,6 @@ dependencies {
     testRuntime 'net.sourceforge.jtds:jtds:1.+'
     testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
 }
+
+apply from: '../opencadc.gradle'
+

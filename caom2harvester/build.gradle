@@ -4,6 +4,7 @@ plugins {
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7.1'
     id 'application'
+    id 'checkstyle'
 }
 
 repositories {
@@ -27,7 +28,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:[1.0,)'
     compile 'org.opencadc:caom2:[2.3.4,)'
     compile 'org.opencadc:caom2-compute:[2.3.3,)'
-    compile 'org.opencadc:caom2persistence:[2.3.7,)'
+    compile 'org.opencadc:caom2persistence:[2.3.8,)'
     compile 'org.opencadc:cadc-util:[1.0.14,)'
     compile 'org.opencadc:caom2-repo:[1.0,)'
     compile 'org.opencadc:caom2-persist:[2.3.1,)'
@@ -37,3 +38,6 @@ dependencies {
     
     testCompile 'junit:junit:4.+'
 }
+
+apply from: '../opencadc.gradle'
+
