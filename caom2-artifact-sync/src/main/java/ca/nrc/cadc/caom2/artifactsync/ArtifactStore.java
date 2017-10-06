@@ -69,18 +69,19 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.net.TransientException;
-
 import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
+
+import ca.nrc.cadc.net.TransientException;
 
 /**
  * An interface to a CAOM2 artifact storage system.
  *
  * @author majorb
  */
-public interface ArtifactStore {
+public interface ArtifactStore
+{
 
     /**
      * Checks for artifact existence.
@@ -108,7 +109,8 @@ public interface ArtifactStore {
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
-     * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
+     * Saves an artifact. The artifact will be replaced if artifact already
+     * exists with a different checksum.
      *
      * @param artifactURI
      *            The artifact identifier.
