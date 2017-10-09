@@ -69,6 +69,20 @@
 
 package ca.nrc.cadc.caom2.harvester;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.ComputeUtil;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.repo.client.RepoClient;
+import ca.nrc.cadc.net.TransientException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -90,20 +104,6 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.UncategorizedSQLException;
-
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
-import ca.nrc.cadc.caom2.harvester.state.HarvestState;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.client.RepoClient;
-import ca.nrc.cadc.net.TransientException;
 
 /**
  *
