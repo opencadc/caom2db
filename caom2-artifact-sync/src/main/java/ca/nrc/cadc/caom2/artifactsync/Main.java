@@ -69,6 +69,15 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.security.auth.Subject;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.CertCmdArgUtil;
@@ -78,15 +87,6 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-
-import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
  * Command line entry point for running the caom2-artifact-sync tool.
@@ -106,6 +106,8 @@ public class Main {
             ArtifactStore artifactStore = null;
             String asPackage = null;
             Exception asException = null;
+
+            boolean noVolumeLimitation = am.isSet("noVolumeLimitation");
 
             if (asClassName != null) {
                 try {
@@ -222,8 +224,6 @@ public class Main {
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
-
-
             String[] dbInfo = dbParam.split("[.]");
             Map<String, Object> daoConfig = new HashMap<String, Object>(2);
             daoConfig.put("server", dbInfo[0]);
@@ -235,9 +235,11 @@ public class Main {
 
             String collection = null;
             boolean dryrun = am.isSet("dryrun");
-            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(artifactDAO, dbInfo, artifactStore, collection, dryrun, batchSize);
+            PrivilegedExceptionAction<Integer> harvester = new ArtifactHarvester(artifactDAO,
+                    dbInfo, artifactStore, collection, dryrun, batchSize, noVolumeLimitation);
 
-            PrivilegedExceptionAction<Object> downloader = new DownloadArtifactFiles(artifactDAO, dbInfo, artifactStore, nthreads, batchSize);
+            PrivilegedExceptionAction<Object> downloader = new DownloadArtifactFiles(artifactDAO,
+                    dbInfo, artifactStore, nthreads, batchSize);
 
             int num = 0;
             int loopNum = 1;
@@ -296,10 +298,14 @@ public class Main {
         sb.append("\n     --artifactStore=<fully qualified class name>");
         sb.append("\n     --database=<server.database.schema>");
         sb.append("\n     --collection=<collection> (currently ignored)");
-        sb.append("\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
+        sb.append(
+                "\n     --threads=<number of threads to be used to import artifacts (default: 1)>");
         sb.append("\n\nOptional:");
+        sb.append(
+                "\n     --noVolumeLimitation : no volume limitation should be considered when download artifacts");
         sb.append("\n     --dryrun : check for work but don't do anything");
-        sb.append("\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
+        sb.append(
+                "\n     --batchsize=<integer> Max artifacts to check each iteration (default: 1000)");
         sb.append("\n     --continue : repeat the batches until no work left");
         sb.append("\n\nAuthentication:");
         sb.append("\n     [--netrc|--cert=<pem file>]");
