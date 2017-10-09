@@ -99,10 +99,10 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
     private boolean dryrun;
     private int batchSize;
     private String source;
-    private boolean noVolumeLimitation = false;
+    private final boolean noVolumeLimitation;
 
-    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore,
-            String collection, boolean dryrun, int batchSize, boolean noVolumeLimitation) {
+    public ArtifactHarvester(ArtifactDAO artifactDAO, String[] dbInfo, ArtifactStore artifactStore, String collection, boolean dryrun, int batchSize,
+            boolean noVolumeLimitation) {
         this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
         this.collection = collection;
@@ -112,10 +112,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
 
         this.source = dbInfo[0] + "." + dbInfo[1] + "." + dbInfo[2];
 
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1],
-                dbInfo[2]);
-        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1],
-                dbInfo[2], batchSize);
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2]);
+        this.harvestSkipURIDAO = new HarvestSkipURIDAO(artifactDAO.getDataSource(), dbInfo[1], dbInfo[2], batchSize);
     }
 
     @Override
@@ -130,52 +128,45 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
 
-            // Use the ArtifactDAO to find artifacts with lastModified > last artifact processed
-            List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified,
-                    now, batchSize);
+            // Use the ArtifactDAO to find artifacts with lastModified > last
+            // artifact processed
+            List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, batchSize);
             num = artifacts.size();
             log.info("Found " + num + " artifacts to process.");
+            log.debug("noVolumeLimitation: " + noVolumeLimitation);
 
             for (Artifact artifact : artifacts) {
 
                 // TEMPORARY: For now, to keep the data volume low, only harvest
                 // MAST files that begin with a W, X, Y, or Z
-                List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
                 String path = artifact.getURI().getSchemeSpecificPart();
                 log.debug("Path: " + path);
                 int lastSlashIdx = path.lastIndexOf("/");
                 String fileID = path.substring(lastSlashIdx + 1, path.length());
                 log.debug("FileID: " + fileID);
-                log.debug("noVolumeLimitation: " + noVolumeLimitation);
                 String firstChar = fileID.substring(0, 1).toLowerCase();
+                List<String> acceptedFilePrefixes = Arrays.asList("w", "x", "y", "z");
                 if (!noVolumeLimitation && !acceptedFilePrefixes.contains(firstChar)) {
-                    log.debug("Artifact " + artifact.getURI()
-                            + " skipped by temporary data volume restriction");
+                    log.debug("Artifact " + artifact.getURI() + " skipped by temporary data volume restriction");
                 } else {
                     try {
                         // only process mast artifacts for now
                         if ("mast".equalsIgnoreCase(artifact.getURI().getScheme())) {
 
-                            boolean exists = artifactStore.contains(artifact.getURI(),
-                                    artifact.contentChecksum);
-                            log.debug("Artifact " + artifact.getURI() + " with MD5 "
-                                    + artifact.contentChecksum + " exists: " + exists);
+                            boolean exists = artifactStore.contains(artifact.getURI(), artifact.contentChecksum);
+                            log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact.contentChecksum + " exists: " + exists);
                             if (!exists) {
 
                                 // see if there's already an entry
-                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS,
-                                        artifact.getURI());
+                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                 if (skip == null) {
                                     if (!dryrun) {
-                                        log.info("--> Adding artifact to skip table: "
-                                                + artifact.getURI());
+                                        log.info("--> Adding artifact to skip table: " + artifact.getURI());
                                         // set the message to be an empty string
-                                        skip = new HarvestSkipURI(source, STATE_CLASS,
-                                                artifact.getURI(), "");
+                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
                                         harvestSkipURIDAO.put(skip);
                                     } else {
-                                        log.info("--> Artifact eligible for harvesting: "
-                                                + artifact.getURI());
+                                        log.info("--> Artifact eligible for harvesting: " + artifact.getURI());
                                     }
                                     newDownloadCount++;
                                 } else {
@@ -187,21 +178,17 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
                             if (!dryrun) {
                                 state.curLastModified = artifact.getLastModified();
                                 harvestStateDAO.put(state);
-                                log.debug("Updated artifact harvest state.  Date: "
-                                        + state.curLastModified);
+                                log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
                             }
                         } else {
                             log.debug("Skipping non-MAST artifact: " + artifact.getURI());
                         }
                     } catch (Throwable t) {
-                        log.error(
-                                "Failed to determine if artifact " + artifact.getURI() + " exists.",
-                                t);
+                        log.error("Failed to determine if artifact " + artifact.getURI() + " exists.", t);
                         if (!dryrun) {
                             log.info("--> Adding artifact to skip table: " + artifact.getURI());
                             // set the message to be an empty string
-                            HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS,
-                                    artifact.getURI(), "");
+                            HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), "");
                             harvestSkipURIDAO.put(skip);
                         }
                     }
@@ -209,8 +196,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             }
             return num;
         } finally {
-            log.info("Discovered " + downloadCount + " total artifacts eligible for download. ("
-                    + newDownloadCount + " new)");
+            log.info("Discovered " + downloadCount + " total artifacts eligible for download. (" + newDownloadCount + " new)");
         }
 
     }
