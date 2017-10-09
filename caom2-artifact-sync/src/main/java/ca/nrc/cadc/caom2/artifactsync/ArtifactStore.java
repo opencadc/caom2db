@@ -49,11 +49,11 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.net.TransientException;
-
 import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
+
+import ca.nrc.cadc.net.TransientException;
 
 /**
  * An interface to a CAOM2 artifact storage system.
