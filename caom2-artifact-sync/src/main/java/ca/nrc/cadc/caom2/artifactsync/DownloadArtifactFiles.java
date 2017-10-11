@@ -166,7 +166,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
 
             StringBuilder endMessage = new StringBuilder();
             endMessage.append("END: {");
-            endMessage.append("\"successCount\":\"").append(successes).append("\"");;
+            endMessage.append("\"successCount\":\"").append(successes).append("\"");
             endMessage.append(",");
             endMessage.append("\"failureCount\":\"").append(results.size() - successes).append("\"");
             endMessage.append(",");
@@ -255,8 +255,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
                     sourceLength = new Long(contentLength);
                 }
 
-                // check again to be sure the destination doesn't already have
-                // it
+                // check again to be sure the destination doesn't already have it
                 if (artifactStore.contains(artifactURI, sourceChecksum)) {
                     log.info("[" + threadName + "] ArtifactStore already has correct copy of " + artifactURI + " with checksum " + sourceChecksum);
                     result.success = true;
@@ -328,7 +327,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Object> 
     }
 
     class ArtifactDownloadResult {
-
         URI artifactURI;
         boolean success;
         String errorMessage;

@@ -128,8 +128,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer> {
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
 
-            // Use the ArtifactDAO to find artifacts with lastModified > last
-            // artifact processed
+            // Use the ArtifactDAO to find artifacts with lastModified > last artifact processed
             List<Artifact> artifacts = artifactDAO.getList(Artifact.class, state.curLastModified, now, batchSize);
             num = artifacts.size();
             log.info("Found " + num + " artifacts to process.");

@@ -108,8 +108,7 @@ public interface ArtifactStore {
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
-     * Saves an artifact. The artifact will be replaced if artifact already
-     * exists with a different checksum.
+     * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
      *
      * @param artifactURI
      *            The artifact identifier.
