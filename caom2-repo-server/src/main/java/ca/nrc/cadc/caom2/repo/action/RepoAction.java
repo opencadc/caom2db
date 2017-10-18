@@ -81,9 +81,11 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -96,8 +98,8 @@ import ca.nrc.cadc.rest.RestAction;
 import java.io.File;
 import java.net.URISyntaxException;
 
+
 /**
- *
  * @author pdowler
  */
 public abstract class RepoAction extends RestAction
@@ -220,10 +222,9 @@ public abstract class RepoAction extends RestAction
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission(String collection)
-        throws AccessControlException, CertificateException,
-               ResourceNotFoundException, IOException
-    {
+
+    protected void checkReadPermission(String collection) throws AccessControlException,
+        CertificateException, ResourceNotFoundException, IOException {
         initState();
         if (!readable)
         {
@@ -257,14 +258,12 @@ public abstract class RepoAction extends RestAction
                 if (gms.isMember(CADC_GROUP_URI.getName()))
                 	return;
             }
-        }
-        catch(AccessControlException ex)
-        {
-            throw new AccessControlException("read permission denied (credentials not found): " + getURI());
-        }
-        catch(UserNotFoundException ex)
-        {
-            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        } catch (AccessControlException ex) {
+            throw new AccessControlException(
+                "read permission denied (credentials not found): " + getURI());
+        } catch (UserNotFoundException ex) {
+            throw new AccessControlException(
+                "read permission denied (user not found): " + getURI());
         }
         throw new AccessControlException("permission denied: " + getURI());
     }
@@ -278,10 +277,8 @@ public abstract class RepoAction extends RestAction
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission(ObservationURI uri)
-        throws AccessControlException, CertificateException,
-               ResourceNotFoundException, IOException
-    {
+    protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
+        CertificateException, ResourceNotFoundException, IOException {
         initState();
         if (!writable)
         {
@@ -305,14 +302,12 @@ public abstract class RepoAction extends RestAction
                 if (gms.isMember(guri.getName()))
                     return;
             }
-        }
-        catch(AccessControlException ex)
-        {
-            throw new AccessControlException("read permission denied (credentials not found): " + getURI());
-        }
-        catch(UserNotFoundException ex)
-        {
-            throw new AccessControlException("read permission denied (user not found): " + getURI());
+        } catch (AccessControlException ex) {
+            throw new AccessControlException(
+                "read permission denied (credentials not found): " + getURI());
+        } catch (UserNotFoundException ex) {
+            throw new AccessControlException(
+                "read permission denied (user not found): " + getURI());
         }
 
         throw new AccessControlException("permission denied: " + getURI());
@@ -324,8 +319,13 @@ public abstract class RepoAction extends RestAction
         {
             CaomValidator.validate(obs);
 
-            if (computeMetadata || computeMetadataValidation)
-            {
+            for (Plane pl : obs.getPlanes()) {
+                for (Artifact a : pl.getArtifacts()) {
+                    CaomWCSValidator.validate(a);
+                }
+            }
+
+            if (computeMetadata || computeMetadataValidation) {
                 String ostr = obs.getCollection() + "/" + obs.getObservationID();
                 String cur = ostr;
                 try
@@ -340,16 +340,12 @@ public abstract class RepoAction extends RestAction
                 catch(Error er)
                 {
                     throw new RuntimeException("failed to compute metadata for plane " + cur, er);
-                }
-                catch(Exception ex)
-                {
-                    throw new IllegalArgumentException("failed to compute metadata for plane " + cur, ex);
-                }
-                finally
-                {
-                    if (!computeMetadata) // do not impact checksums
-                        for (Plane p : obs.getPlanes())
-                        {
+                } catch (Exception ex) {
+                    throw new IllegalArgumentException(
+                        "failed to compute metadata for plane " + cur, ex);
+                } finally {
+                    if (!computeMetadata) {
+                        for (Plane p : obs.getPlanes()) {
                             ComputeUtil.clearTransientState(p);
                         }
                 }
@@ -375,30 +371,32 @@ public abstract class RepoAction extends RestAction
 
 
     /**
-     * Get configuration for specified collection
+     * Get configuration for specified collection.
+     *
      * @param collection
      * @return
      * @throws IOException
      */
-    private CaomRepoConfig.Item getCollectionConfig(String collection)
-            throws IOException
-    {
-        if (this.repoConfig == null)
-        {
+
+    private CaomRepoConfig.Item getCollectionConfig(String collection) throws IOException {
+        if (this.repoConfig == null) {
             getConfig();
         }
 
         return this.repoConfig.getConfig(collection);
     }
 
-
-    public CaomRepoConfig getConfig()
-            throws IOException
-    {
-        if (this.repoConfig == null)
-        {
+    /**
+     * Get the CaomRepo configuration.
+     *
+     * @return CaomRepo configuration
+     * @throws IOException Error encountered while reading the configuration file
+     */
+    public CaomRepoConfig getConfig() throws IOException {
+        if (this.repoConfig == null) {
             String serviceName = syncInput.getContextPath();
-            File config = new File(System.getProperty("user.home") + "/config", serviceName + ".properties");
+            File config = new File(System.getProperty("user.home") + "/config",
+                serviceName + ".properties");
             this.repoConfig = new CaomRepoConfig(config);
 
             if (this.repoConfig.isEmpty())

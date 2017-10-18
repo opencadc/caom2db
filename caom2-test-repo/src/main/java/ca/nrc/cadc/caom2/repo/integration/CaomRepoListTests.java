@@ -163,49 +163,43 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests
     }
 
     @Test
-    public void testListSuccess() throws Throwable
-    {
-        try
-        {
-        	Integer maxRec = 3;
+    public void testListSuccess() throws Throwable {
+        try {
+            // Add a list of observations
+            List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1", "testListSuccess2", "testListSuccess3"));
+            List<Observation> observations = this.putObservations(baseIDs);
+            Assert.assertTrue("failed to put observations", observations.size() == 3);
+            Assert.assertNotNull("failed to get first observation maxLastModified date",
+                observations.get(0).getLastModified());
+            Assert.assertNotNull("failed to get first observation maxLastModified date",
+                observations.get(1).getLastModified());
+            Assert.assertNotNull("failed to get first observation maxLastModified date",
+                observations.get(2).getLastModified());
+            final Date start = getTime(observations.get(0).getLastModified());
+            final Date mid = getTime(observations.get(1).getLastModified());
+            final Date end = getTime(observations.get(2).getLastModified());
+            Integer maxRec = 3;
 
-        	// Add a list of observations
-        	List<String> baseIDs = new ArrayList<>(Arrays.asList("testListSuccess1",
-        			"testListSuccess2", "testListSuccess3"));
-        	List<Observation> observations = this.putObservations(baseIDs);
-        	Assert.assertTrue("failed to put observations", observations.size() == 3);
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(0).getLastModified());
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(1).getLastModified());
-        	Assert.assertNotNull("failed to get first observation maxLastModified date",
-        			observations.get(2).getLastModified());
-        	Date start = getTime(observations.get(0).getLastModified());
-        	Date mid = getTime(observations.get(1).getLastModified());
-        	Date end = getTime(observations.get(2).getLastModified());
+            // Check that we have maxRec of the observations, use default (ascending) order
+            checkObservationList(baseIDs.size(), SCHEME + TEST_COLLECTION, maxRec, start,
+                null, subject2, null, observations, 200, null, true);
 
-        	// Check that we have maxRec of the observations, use default (ascending) order
-        	checkObservationList(baseIDs.size(), super.SCHEME + TEST_COLLECTION, maxRec, start,
-        			null, super.SUBJECT2, null, observations, 200, null, true);
+            observations.remove(0);
+            // Check that we only have the last two observations
+            checkObservationList((baseIDs.size() - 1), SCHEME + TEST_COLLECTION, maxRec, mid,
+                null, subject2, null, observations, 200, null, true);
 
-        	observations.remove(0);
-        	// Check that we only have the last two observations
-        	checkObservationList((baseIDs.size() - 1), super.SCHEME + TEST_COLLECTION, maxRec, mid,
-        			null, super.SUBJECT2, null, observations, 200, null, true);
+            
+            observations.remove(0);
+            // Check that we only have the last observation
+            checkObservationList((baseIDs.size() - 2), SCHEME + TEST_COLLECTION, maxRec, end,
+                null, subject2, null, observations, 200, null, true);
 
-        	observations.remove(0);
-        	// Check that we only have the last observation
-        	checkObservationList((baseIDs.size() - 2), super.SCHEME + TEST_COLLECTION, maxRec, end,
-        			null, super.SUBJECT2, null, observations, 200, null, true);
-
-        	// cleanup (ok to fail)
-        	for (Observation obs : observations)
-        	{
-    	        deleteObservation(obs.getURI().toString(), super.SUBJECT1, null, null);
-        	}
-        }
-        catch (Throwable t)
-        {
+            // cleanup (ok to fail)
+            for (Observation obs : observations) {
+                deleteObservation(obs.getURI().toString(), subject1, null, null);
+            }
+        } catch (Throwable t) {
             log.error("unexpected", t);
             Assert.fail();
         }
