@@ -81,8 +81,8 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.TransientException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -96,7 +96,9 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -125,8 +127,7 @@ public class ObservationHarvester extends Harvester {
 
     HarvestSkipURIDAO harvestSkip = null;
 
-    public ObservationHarvester(HarvestResource src, HarvestResource dest, Integer batchSize,
-            boolean full, boolean dryrun, boolean nochecksum, int nthreads)
+    public ObservationHarvester(HarvestResource src, HarvestResource dest, Integer batchSize, boolean full, boolean dryrun, boolean nochecksum, int nthreads)
             throws IOException, URISyntaxException {
         super(Observation.class, src, dest, batchSize, full, dryrun);
         this.nochecksum = nochecksum;
@@ -324,8 +325,7 @@ public class ObservationHarvester extends Harvester {
                 if (curBatchLeader != null) {
                     log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
                     log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
-                    if (curBatchLeader.getID().equals(state.curID)
-                            && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
+                    if (curBatchLeader.getID().equals(state.curID) && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
                         //entityListState.remove(0);
                         iter.remove();
                         expectedNum--;
@@ -403,8 +403,8 @@ public class ObservationHarvester extends Harvester {
                                 Observation cc = destObservationDAO.getShallow(o.getID());
                                 log.debug("collision check: " + o.getURI() + " " + format(o.getMaxLastModified()) + " vs " + format(cc.getMaxLastModified()));
                                 if (!cc.getMaxLastModified().equals(o.getMaxLastModified())) {
-                                    throw new IllegalStateException("detected harvesting collision: " + o.getURI()
-                                            + " maxLastModified: " + format(o.getMaxLastModified()));
+                                    throw new IllegalStateException(
+                                            "detected harvesting collision: " + o.getURI() + " maxLastModified: " + format(o.getMaxLastModified()));
                                 }
                             }
 
@@ -418,7 +418,7 @@ public class ObservationHarvester extends Harvester {
                             // temporary validation hack to avoid tickmarks
                             // in
                             // the keywords columns
-                            CaomValidator.validateKeywords(o);
+                            // CaomValidator.validateKeywords(o);
 
                             if (computePlaneMetadata) {
                                 log.debug("computePlaneMetadata: " + o.getObservationID());
@@ -505,9 +505,7 @@ public class ObservationHarvester extends Harvester {
                         } else {
                             log.error("unexpected exception", oops);
                         }
-                    } else if (oops instanceof IllegalArgumentException
-                            && str.contains("CaomValidator")
-                            && str.contains("keywords")) {
+                    } else if (oops instanceof IllegalArgumentException && str.contains("CaomValidator") && str.contains("keywords")) {
                         log.error("CONTENT PROBLEM - invalid keywords: " + o.getURI());
                         ret.handled++;
                     } else {
@@ -666,8 +664,8 @@ public class ObservationHarvester extends Harvester {
         SkippedWrapperURI<ObservationResponse> end = entityList.get(entityList.size() - 1);
         if (skipped) {
             if (start.skip.lastModified.equals(end.skip.lastModified)) {
-                throw new RuntimeException("detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName()
-                        + " at " + format(start.skip.lastModified));
+                throw new RuntimeException(
+                        "detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName() + " at " + format(start.skip.lastModified));
             }
             return;
         }
@@ -688,8 +686,8 @@ public class ObservationHarvester extends Harvester {
         }
 
         if (d1.equals(d2)) {
-            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName()
-                    + " at " + format(start.entity.observation.getMaxLastModified()));
+            throw new RuntimeException(
+                    "detected infinite harvesting loop: " + entityClass.getSimpleName() + " at " + format(start.entity.observation.getMaxLastModified()));
         }
     }
 
@@ -702,17 +700,9 @@ public class ObservationHarvester extends Harvester {
     }
 
     /*
-     * private List<SkippedWrapperURI<ObservationState>>
-     * wrapState(List<ObservationState> obsList)
-     * {
-     * List<SkippedWrapperURI<ObservationState>> ret = new
-     * ArrayList<SkippedWrapperURI<ObservationState>>(obsList.size());
-     * for (ObservationState o : obsList)
-     * {
-     * ret.add(new SkippedWrapperURI<ObservationState>(o, null));
-     * }
-     * return ret;
-     * }
+     * private List<SkippedWrapperURI<ObservationState>> wrapState(List<ObservationState> obsList) { List<SkippedWrapperURI<ObservationState>> ret = new
+     * ArrayList<SkippedWrapperURI<ObservationState>>(obsList.size()); for (ObservationState o : obsList) { ret.add(new SkippedWrapperURI<ObservationState>(o,
+     * null)); } return ret; }
      */
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
@@ -737,34 +727,17 @@ public class ObservationHarvester extends Harvester {
     }
 
     /*
-     * private List<SkippedWrapperURI<ObservationState>> getSkippedState(Date
-     * start)
-     * {
-     * log.info("harvest window (skip): " + format(start) + " [" + batchSize +
-     * "]" + " source = " + source + " cname = " + cname);
-     * List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
+     * private List<SkippedWrapperURI<ObservationState>> getSkippedState(Date start) { log.info("harvest window (skip): " + format(start) + " [" + batchSize +
+     * "]" + " source = " + source + " cname = " + cname); List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
      *
-     * List<SkippedWrapperURI<ObservationState>> ret = new
-     * ArrayList<SkippedWrapperURI<ObservationState>>(skip.size());
-     * for (HarvestSkipURI hs : skip)
-     * {
-     * ObservationState o = null;
-     * log.debug("getSkipped: " + hs.getSkipID());
-     * log.debug("start: " + start);
+     * List<SkippedWrapperURI<ObservationState>> ret = new ArrayList<SkippedWrapperURI<ObservationState>>(skip.size()); for (HarvestSkipURI hs : skip) {
+     * ObservationState o = null; log.debug("getSkipped: " + hs.getSkipID()); log.debug("start: " + start);
      *
-     * ObservationResponse wr = srcObservationService.get(src.getCollection(),
-     * hs.getSkipID(), start);
+     * ObservationResponse wr = srcObservationService.get(src.getCollection(), hs.getSkipID(), start);
      *
-     * if (wr != null && wr.getObservationState() != null)
-     * o = wr.getObservationState();
+     * if (wr != null && wr.getObservationState() != null) o = wr.getObservationState();
      *
-     * if (o != null)
-     * {
-     * ret.add(new SkippedWrapperURI<ObservationState>(o, hs));
-     * }
-     * }
-     * return ret;
-     * }
+     * if (o != null) { ret.add(new SkippedWrapperURI<ObservationState>(o, hs)); } } return ret; }
      */
     @Override
     protected void initHarvestState(DataSource ds, Class c) {
