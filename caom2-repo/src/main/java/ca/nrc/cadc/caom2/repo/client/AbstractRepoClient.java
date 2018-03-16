@@ -1,71 +1,71 @@
 /*
-************************************************************************
-*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
-**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
-*
-*  (c) 2011.                            (c) 2011.
-*  Government of Canada                 Gouvernement du Canada
-*  National Research Council            Conseil national de recherches
-*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-*  All rights reserved                  Tous droits réservés
-*
-*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
-*  expressed, implied, or               énoncée, implicite ou légale,
-*  statutory, of any kind with          de quelque nature que ce
-*  respect to the software,             soit, concernant le logiciel,
-*  including without limitation         y compris sans restriction
-*  any warranty of merchantability      toute garantie de valeur
-*  or fitness for a particular          marchande ou de pertinence
-*  purpose. NRC shall not be            pour un usage particulier.
-*  liable in any event for any          Le CNRC ne pourra en aucun cas
-*  damages, whether direct or           être tenu responsable de tout
-*  indirect, special or general,        dommage, direct ou indirect,
-*  consequential or incidental,         particulier ou général,
-*  arising from the use of the          accessoire ou fortuit, résultant
-*  software.  Neither the name          de l'utilisation du logiciel. Ni
-*  of the National Research             le nom du Conseil National de
-*  Council of Canada nor the            Recherches du Canada ni les noms
-*  names of its contributors may        de ses  participants ne peuvent
-*  be used to endorse or promote        être utilisés pour approuver ou
-*  products derived from this           promouvoir les produits dérivés
-*  software without specific prior      de ce logiciel sans autorisation
-*  written permission.                  préalable et particulière
-*                                       par écrit.
-*
-*  This file is part of the             Ce fichier fait partie du projet
-*  OpenCADC project.                    OpenCADC.
-*
-*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
-*  you can redistribute it and/or       vous pouvez le redistribuer ou le
-*  modify it under the terms of         modifier suivant les termes de
-*  the GNU Affero General Public        la “GNU Affero General Public
-*  License as published by the          License” telle que publiée
-*  Free Software Foundation,            par la Free Software Foundation
-*  either version 3 of the              : soit la version 3 de cette
-*  License, or (at your option)         licence, soit (à votre gré)
-*  any later version.                   toute version ultérieure.
-*
-*  OpenCADC is distributed in the       OpenCADC est distribué
-*  hope that it will be useful,         dans l’espoir qu’il vous
-*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
-*  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
-*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
-*  General Public License for           Générale Publique GNU Affero
-*  more details.                        pour plus de détails.
-*
-*  You should have received             Vous devriez avoir reçu une
-*  a copy of the GNU Affero             copie de la Licence Générale
-*  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
-*
-*  $Revision: 5 $
-*
-************************************************************************
-*/
+ ************************************************************************
+ *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+ **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ *
+ *  (c) 2011.                            (c) 2011.
+ *  Government of Canada                 Gouvernement du Canada
+ *  National Research Council            Conseil national de recherches
+ *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ *  All rights reserved                  Tous droits réservés
+ *
+ *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+ *  expressed, implied, or               énoncée, implicite ou légale,
+ *  statutory, of any kind with          de quelque nature que ce
+ *  respect to the software,             soit, concernant le logiciel,
+ *  including without limitation         y compris sans restriction
+ *  any warranty of merchantability      toute garantie de valeur
+ *  or fitness for a particular          marchande ou de pertinence
+ *  purpose. NRC shall not be            pour un usage particulier.
+ *  liable in any event for any          Le CNRC ne pourra en aucun cas
+ *  damages, whether direct or           être tenu responsable de tout
+ *  indirect, special or general,        dommage, direct ou indirect,
+ *  consequential or incidental,         particulier ou général,
+ *  arising from the use of the          accessoire ou fortuit, résultant
+ *  software.  Neither the name          de l'utilisation du logiciel. Ni
+ *  of the National Research             le nom du Conseil National de
+ *  Council of Canada nor the            Recherches du Canada ni les noms
+ *  names of its contributors may        de ses  participants ne peuvent
+ *  be used to endorse or promote        être utilisés pour approuver ou
+ *  products derived from this           promouvoir les produits dérivés
+ *  software without specific prior      de ce logiciel sans autorisation
+ *  written permission.                  préalable et particulière
+ *                                       par écrit.
+ *
+ *  This file is part of the             Ce fichier fait partie du projet
+ *  OpenCADC project.                    OpenCADC.
+ *
+ *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+ *  you can redistribute it and/or       vous pouvez le redistribuer ou le
+ *  modify it under the terms of         modifier suivant les termes de
+ *  the GNU Affero General Public        la “GNU Affero General Public
+ *  License as published by the          License” telle que publiée
+ *  Free Software Foundation,            par la Free Software Foundation
+ *  either version 3 of the              : soit la version 3 de cette
+ *  License, or (at your option)         licence, soit (à votre gré)
+ *  any later version.                   toute version ultérieure.
+ *
+ *  OpenCADC is distributed in the       OpenCADC est distribué
+ *  hope that it will be useful,         dans l’espoir qu’il vous
+ *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+ *  without even the implied             GARANTIE : sans même la garantie
+ *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+ *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+ *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+ *  General Public License for           Générale Publique GNU Affero
+ *  more details.                        pour plus de détails.
+ *
+ *  You should have received             Vous devriez avoir reçu une
+ *  a copy of the GNU Affero             copie de la Licence Générale
+ *  General Public License along         Publique GNU Affero avec
+ *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+ *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+ *                                       <http://www.gnu.org/licenses/>.
+ *
+ *  $Revision: 5 $
+ *
+ ************************************************************************
+ */
 
 package ca.nrc.cadc.caom2.repo.client;
 
@@ -102,7 +102,7 @@ import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
-public abstract class AbstractRepoClient implements RepoClient{
+public abstract class AbstractRepoClient implements RepoClient {
 
     private static final Logger log = Logger.getLogger(AbstractRepoClient.class);
     private static final Integer MAX_NUMBER = 3000;
@@ -129,7 +129,7 @@ public abstract class AbstractRepoClient implements RepoClient{
             return o1.observationState.maxLastModified.compareTo(o2.observationState.maxLastModified);
         }
     };
-    
+
     /**
      * Create new CAOM RepoClient.
      *
@@ -138,36 +138,40 @@ public abstract class AbstractRepoClient implements RepoClient{
      * @param nthreads
      *            number of threads to use when getting list of observations
      */
-    
-    public AbstractRepoClient(URI resourceID, int nthreads){
-    	this.resourceID=resourceID;
-    	this.nthreads=nthreads;
+
+    public AbstractRepoClient(URI resourceID, int nthreads) {
+        this.resourceID = resourceID;
+        this.nthreads = nthreads;
     }
-    
-    
+
     protected abstract void init();
-    
+
     protected abstract void initDel();
 
-	@Override
-	public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
+    @Override
+    public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         initDel();
 
         final List<DeletedObservation> ret = new ArrayList<>();
 
-        // TODO: make call(s) to the deletion endpoint until requested number of entries (like getObservationList)
+        // TODO: make call(s) to the deletion endpoint until requested number of
+        // entries (like getObservationList)
 
-        // parse each line into the following 4 values, create DeletedObservation, and add to output list, eg:
+        // parse each line into the following 4 values, create
+        // DeletedObservation, and add to output list, eg:
         /*
-         * UUID id = null; String col = null; String observationID = null; Date lastModified = null; DeletedObservation de = new DeletedObservation(id, new
-         * ObservationURI(col, observationID)); CaomUtil.assignLastModified(de, lastModified, "lastModified"); ret.add(de);
+         * UUID id = null; String col = null; String observationID = null; Date
+         * lastModified = null; DeletedObservation de = new
+         * DeletedObservation(id, new ObservationURI(col, observationID));
+         * CaomUtil.assignLastModified(de, lastModified, "lastModified");
+         * ret.add(de);
          */
 
         return ret;
     }
 
-	@Override
-	public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
+    @Override
+    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException {
         init();
 
         List<ObservationState> accList = new ArrayList<>();
@@ -209,10 +213,13 @@ public abstract class AbstractRepoClient implements RepoClient{
                 int responseCode = get.getResponseCode();
                 log.debug("RESPONSE CODE: '" + responseCode + "'");
                 /*
-                 * if (responseCode == 302) // redirected url { url = get.getRedirectURL(); log.debug("REDIRECTED URL: " + url); bos = new
-                 * ByteArrayOutputStream(); get = new HttpDownload(url, bos); responseCode = get.getResponseCode();
-                 * log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
-                 *
+                 * if (responseCode == 302) // redirected url { url =
+                 * get.getRedirectURL(); log.debug("REDIRECTED URL: " + url);
+                 * bos = new ByteArrayOutputStream(); get = new
+                 * HttpDownload(url, bos); responseCode = get.getResponseCode();
+                 * log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode
+                 * + "'");
+                 * 
                  * }
                  */
 
@@ -270,9 +277,9 @@ public abstract class AbstractRepoClient implements RepoClient{
         return partialList;
     }
 
-	@Override
-	public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-            throws InterruptedException, ExecutionException {
+    @Override
+    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException,
+            ExecutionException {
         init();
 
         // startDate = null;
@@ -323,8 +330,8 @@ public abstract class AbstractRepoClient implements RepoClient{
         return list;
     }
 
-	@Override
-	public ObservationResponse get(ObservationURI uri) {
+    @Override
+    public ObservationResponse get(ObservationURI uri) {
         init();
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
@@ -338,18 +345,18 @@ public abstract class AbstractRepoClient implements RepoClient{
         return wt.getObservation();
     }
 
-	@Override
-	public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException {
+    @Override
+    public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException {
         init();
         if (listURI == null) {
             throw new IllegalArgumentException("list of uri cannot be null");
         }
-        //****************
+        // ****************
         List<ObservationResponse> list = new ArrayList<>();
         // Create tasks for each file
         List<Callable<ObservationResponse>> tasks = new ArrayList<>();
 
-        // want to put the result list back in same order as the input list; 
+        // want to put the result list back in same order as the input list;
         // maxLasModifiedComparatorForResponse sorts by state.maxLastModified
         // so fake it with date values that increase
         Date now = new Date();
@@ -386,11 +393,11 @@ public abstract class AbstractRepoClient implements RepoClient{
         }
         Collections.sort(list, maxLasModifiedComparatorForResponse);
 
-        //****************
+        // ****************
         return list;
     }
 
-	@Override
+    @Override
     public ObservationResponse get(String collection, URI uri, Date start) {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
@@ -424,8 +431,8 @@ public abstract class AbstractRepoClient implements RepoClient{
 
     private List<ObservationState> transformByteArrayOutputStreamIntoListOfObservationState(final ByteArrayOutputStream bos, DateFormat sdf, char separator,
             char endOfLine)
-
-            throws ParseException, IOException, URISyntaxException {
+        throws ParseException, IOException, URISyntaxException {
+        
         init();
 
         List<ObservationState> list = new ArrayList<>();
@@ -519,34 +526,34 @@ public abstract class AbstractRepoClient implements RepoClient{
 
     }
 
-	@Override
-	public URI getResourceID() {
-		return resourceID;
-	}
+    @Override
+    public URI getResourceID() {
+        return resourceID;
+    }
 
-	@Override
-	public int getNthreads() {
-		return nthreads;
-	}
+    @Override
+    public int getNthreads() {
+        return nthreads;
+    }
 
-	@Override
-	public URL getBaseServiceURL() {
-		return baseServiceURL;
-	}
+    @Override
+    public URL getBaseServiceURL() {
+        return baseServiceURL;
+    }
 
-	@Override
-	public void setBaseServiceURL(URL baseServiceURL) {
-		this.baseServiceURL=baseServiceURL;
-	}
+    @Override
+    public void setBaseServiceURL(URL baseServiceURL) {
+        this.baseServiceURL = baseServiceURL;
+    }
 
-	@Override
-	public URL getBaseDeletionURL() {
-		return baseDeletionURL;
-	}
+    @Override
+    public URL getBaseDeletionURL() {
+        return baseDeletionURL;
+    }
 
-	@Override
-	public void setBaseDeletionURL(URL baseDeletionURL) {
-		this.baseDeletionURL=baseDeletionURL;
-	}
-    
+    @Override
+    public void setBaseDeletionURL(URL baseDeletionURL) {
+        this.baseDeletionURL = baseDeletionURL;
+    }
+
 }
