@@ -69,43 +69,65 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 
 import java.net.URI;
 import java.net.URL;
-import java.security.AccessControlException;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-public interface RepoClient {
-	
-    public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec);
+import javax.security.auth.Subject;
 
-    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException;
+import org.apache.log4j.Logger;
 
-    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-            throws InterruptedException, ExecutionException;
+public class RegisteredRepoClient extends AbstractRepoClient{
 
-    public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException;
-    
-    public ObservationResponse get(ObservationURI uri);
+    private static final Logger log = Logger.getLogger(RegisteredRepoClient.class);
 
-    public ObservationResponse get(String collection, URI uri, Date start);
-    
-	public URI getResourceID();
+    private RegistryClient rc;
 
-	public int getNthreads();
+    /**
+     * Create new CAOM RepoClient.
+     *
+     * @param resourceID
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
+     */
+    public RegisteredRepoClient(URI resourceID, int nthreads) {
+    	super(resourceID, nthreads);
+    	this.rc = new RegistryClient();
+    }
 
-	public URL getBaseServiceURL();
+    protected void init() {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null) {
+            meth = AuthMethod.ANON;
+        }
+        URL baseServiceURL = rc.getServiceURL(super.getResourceID(), Standards.CAOM2REPO_OBS_23, meth);
+        if (baseServiceURL == null) {
+            throw new RuntimeException("not found: " + super.getResourceID() + " + " + Standards.CAOM2REPO_OBS_23 + " + " + meth);
+        }
+        super.setBaseServiceURL(baseServiceURL);
+        log.debug("observation list URL: " + baseServiceURL.toString());
+        log.debug("AuthMethod:  " + meth);
+    }
 
-	public void setBaseServiceURL(URL baseServiceURL);
-
-	public URL getBaseDeletionURL();
-
-	public void setBaseDeletionURL(URL baseDeletionURL);
+    protected void initDel() {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null) {
+            meth = AuthMethod.ANON;
+        }
+        URL baseDeletionURL = rc.getServiceURL(super.getResourceID(), Standards.CAOM2REPO_DEL_23, meth);
+        if (baseDeletionURL == null) {
+            throw new RuntimeException("not found: " + super.getResourceID() + " + " + Standards.CAOM2REPO_DEL_23 + " + " + meth);
+        }
+        super.setBaseDeletionURL(baseDeletionURL);
+        log.debug("deletion list URL: " + baseDeletionURL.toString());
+        log.debug("AuthMethod:  " + meth);
+    }
 
 }

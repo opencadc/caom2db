@@ -69,43 +69,41 @@
 
 package ca.nrc.cadc.caom2.repo.client;
 
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-
 import java.net.URI;
 import java.net.URL;
-import java.security.AccessControlException;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
-public interface RepoClient {
-	
-    public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec);
+import org.apache.log4j.Logger;
 
-    public List<ObservationState> getObservationList(String collection, Date start, Date end, Integer maxrec) throws AccessControlException;
+public class HttpRepoClient extends AbstractRepoClient{
 
-    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations)
-            throws InterruptedException, ExecutionException;
+    private static final Logger log = Logger.getLogger(HttpRepoClient.class);
 
-    public List<ObservationResponse> get(List<ObservationURI> listURI) throws InterruptedException, ExecutionException;
-    
-    public ObservationResponse get(ObservationURI uri);
+    /**
+     * Create new CAOM RepoClient.
+     *
+     * @param resourceID
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
+     */
+    public HttpRepoClient(URI resourceID, int nthreads, URL baseServiceURL, URL baseDeletionURL ) {
+    	super(resourceID, nthreads);
+        setBaseServiceURL(baseServiceURL);
+        setBaseDeletionURL(baseDeletionURL);
+    }
 
-    public ObservationResponse get(String collection, URI uri, Date start);
-    
-	public URI getResourceID();
+    protected void init() {
+        if (getBaseServiceURL() == null) {
+            throw new RuntimeException("observation list URL not defined");
+        }
+        log.debug("observation list URL: " + getBaseServiceURL().toString());
+    }
 
-	public int getNthreads();
-
-	public URL getBaseServiceURL();
-
-	public void setBaseServiceURL(URL baseServiceURL);
-
-	public URL getBaseDeletionURL();
-
-	public void setBaseDeletionURL(URL baseDeletionURL);
+    protected void initDel() {
+        if (getBaseDeletionURL() == null) {
+            throw new RuntimeException("deletion list URL not defined");
+        }
+        log.debug("deletion list URL: " + getBaseDeletionURL().toString());
+    }
 
 }

@@ -88,12 +88,12 @@ import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.Log4jInit;
 
-public class RepoClientTest {
+public class RegisteredRepoClientTest {
 
-    private static final Logger log = Logger.getLogger(RepoClientTest.class);
+    private static final Logger log = Logger.getLogger(RegisteredRepoClientTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RepoClient", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client.RegistryBasedRepoClient", Level.DEBUG);
         // Log4jInit.setLevel("ca.nrc.cadc.reg", Level.DEBUG);
     }
 
@@ -115,7 +115,7 @@ public class RepoClientTest {
 
                 @Override
                 public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
+                    RepoClient repoC = new RegisteredRepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
                     Assert.assertEquals(list.size(), 6);
@@ -147,7 +147,7 @@ public class RepoClientTest {
 
                 @Override
                 public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://mast.stsci.edu/caom2repo"), 8);
+                    RepoClient repoC = new RegisteredRepoClient(URI.create("ivo://mast.stsci.edu/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("HST", null, null, 5);
                     Assert.assertEquals(list.size(), 6);
@@ -169,7 +169,7 @@ public class RepoClientTest {
 
                 @Override
                 public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
+                    RepoClient repoC = new RegisteredRepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
                     Assert.fail("expected exception, got results");
@@ -193,7 +193,7 @@ public class RepoClientTest {
 
                 @Override
                 public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
+                    RepoClient repoC = new RegisteredRepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     List<ObservationResponse> list = repoC.getList("IRIS", null, null, 5);
                     Assert.assertEquals(list.size(), 6);
@@ -225,7 +225,7 @@ public class RepoClientTest {
 
                 @Override
                 public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
+                    RepoClient repoC = new RegisteredRepoClient(URI.create("ivo://cadc.nrc.ca/caom2repo"), 8);
 
                     ObservationResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
                     Assert.assertNotNull(wr.observation);
