@@ -118,7 +118,7 @@ public class Main {
             //
             //            log.info("AuthenticationUtil.getCurrentSubject(): " + AuthenticationUtil.getCurrentSubject());
 
-            RepoClient rc = new RepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 1);
+            RepoClient rc = new RegisteredRepoClient(new URI("ivo://cadc.nrc.ca/caom2repo"), 1);
 
             List<DeletedObservation> list = rc.getDeleted("HSTHLA", null, null, 100);
 
