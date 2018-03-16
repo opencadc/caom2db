@@ -157,7 +157,7 @@ public class ObservationHarvester extends Harvester {
             this.srcObservationDAO = new ObservationDAO();
             srcObservationDAO.setConfig(config1);
         } else {
-            this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
+            this.srcObservationService = RepoClientFactory.getRepoClient(src, nthreads);
         }
 
         // for now, dest is always a database

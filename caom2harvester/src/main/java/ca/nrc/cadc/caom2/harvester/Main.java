@@ -80,6 +80,7 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -175,11 +176,14 @@ public class Main {
             // source can be a database or service
             String source = am.getValue("source");
             String resourceID = am.getValue("resourceID");
+            String obsBaseUrl = am.getValue("obsBaseUrl");
+            String delBaseUrl = am.getValue("delBaseUrl");
 
             boolean nosrc = (source == null || source.trim().length() == 0);
             boolean nosrv = (resourceID == null || resourceID.trim().length() == 0);
-            if (nosrc && nosrv) {
-                log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier>");
+            boolean nourls = ( obsBaseUrl == null || obsBaseUrl.trim().length() == 0 || delBaseUrl == null || delBaseUrl.trim().length() == 0 );
+            if (nosrc && nosrv && nourls) {
+                log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier> | --obsBaseUrl=<URL> --delBaseUrl=<URL>");
                 usage();
                 System.exit(1);
             }
@@ -188,7 +192,11 @@ public class Main {
             int nthreads = 1;
             if (resourceID != null) {
                 try {
-                    src = new HarvestResource(new URI(resourceID), collection);
+                    if(obsBaseUrl !=null && delBaseUrl!=null){
+                        src = new HarvestResource(new URI(resourceID), new URL(obsBaseUrl), new URL(delBaseUrl), collection);
+                    }else{
+                        src = new HarvestResource(new URI(resourceID), collection);
+                    }
                     if (am.isSet("threads")) {
                         nthreads = Integer.parseInt(am.getValue("threads"));
                     }
@@ -370,8 +378,10 @@ public class Main {
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
-        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema>");
+        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema> | --obsBaseUrl=<URL> --delBaseUrl=<URL> [--threads=<num threads>]");
         sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
+        sb.append("\n         --obsBaseUrl : Specific Observations service base URL (e.g. https://masttest.stsci.edu/partners/meta-service/obs-endpoint)");
+        sb.append("\n         --delBaseUrl : Specific Deletion service base URL (e.g. https://masttest.stsci.edu/partners/meta-service/del-endpoint)");
         sb.append("\n         --threads : number  of threads used to read observation documents (default: 1)");
         sb.append("\n         --source : harvest directly from a database server");
 
