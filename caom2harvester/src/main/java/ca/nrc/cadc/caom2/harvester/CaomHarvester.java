@@ -81,11 +81,14 @@ import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+
 import javax.sql.DataSource;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -111,34 +114,34 @@ public class CaomHarvester implements Runnable {
      * Harvest everything.
      *
      * @param dryrun
-     * true if no changed in the data base are applied during the process
+     *            true if no changed in the data base are applied during the process
      * @param nochecksum
-     * disable metadata checksum comparison
+     *            disable metadata checksum comparison
      * @param compute
-     * compute plane metadata from WCS before insert
+     *            compute plane metadata from WCS before insert
      * @param src
-     * source server,database,schema
+     *            source server,database,schema
      * @param dest
-     * destination server,database,schema
-     * @param basePublisherID base to use in generating Plane publisherID values in destination database
+     *            destination server,database,schema
+     * @param basePublisherID
+     *            base to use in generating Plane publisherID values in destination database
      * @param batchSize
-     * number of observations per batch (~memory consumption)
+     *            number of observations per batch (~memory consumption)
      * @param batchFactor
-     * multiplier for batchSize when harvesting single-table entities
+     *            multiplier for batchSize when harvesting single-table entities
      * @param full
-     * full harvest of all source entities
+     *            full harvest of all source entities
      * @param skip
-     * flag that indicates if shipped observations should be dealt
-     * @param nthreads max threads when harvesting from a service
+     *            flag that indicates if shipped observations should be dealt
+     * @param nthreads
+     *            max threads when harvesting from a service
      * @throws java.io.IOException
-     * IOException
+     *             IOException
      * @throws URISyntaxException
-     * URISyntaxException
+     *             URISyntaxException
      */
-    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute,
-            HarvestResource src, HarvestResource dest, URI basePublisherID,
-            int batchSize, int batchFactor, boolean full, boolean skip, int nthreads)
-            throws IOException, URISyntaxException {
+    public CaomHarvester(boolean dryrun, boolean nochecksum, boolean compute, HarvestResource src, HarvestResource dest, URI basePublisherID, int batchSize,
+            int batchFactor, boolean full, boolean skip, int nthreads) throws IOException, URISyntaxException {
         Integer entityBatchSize = batchSize * batchFactor;
 
         DBConfig dbrc = new DBConfig();
@@ -153,12 +156,18 @@ public class CaomHarvester implements Runnable {
         boolean extendedFeatures = src.getDatabaseServer() != null;
         if (extendedFeatures) {
             if (src.getHarvestAC()) {
+                // set same default endDate so ReadAccess harvest doesn't try to get ahead of observation harvest
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                Date defaultEndDate = new Date(fiveMinAgo);
                 this.observationMetaHarvester = new ReadAccessHarvester(ObservationMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 observationMetaHarvester.setSkipped(skip);
+                observationMetaHarvester.setMaxDate(defaultEndDate);
                 this.planeDataHarvester = new ReadAccessHarvester(PlaneDataReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 planeDataHarvester.setSkipped(skip);
+                planeDataHarvester.setMaxDate(defaultEndDate);
                 this.planeMetaHarvester = new ReadAccessHarvester(PlaneMetaReadAccess.class, src, dest, entityBatchSize, full, dryrun);
                 planeMetaHarvester.setSkipped(skip);
+                planeMetaHarvester.setMaxDate(defaultEndDate);
             }
 
             // deletions in incremental mode only
@@ -171,12 +180,17 @@ public class CaomHarvester implements Runnable {
                     this.planeMetaDeleter = new ReadAccessDeletionHarvester(DeletedPlaneMetaReadAccess.class, src, dest, entityBatchSize, dryrun);
                     this.planeDataDeleter = new ReadAccessDeletionHarvester(DeletedPlaneDataReadAccess.class, src, dest, entityBatchSize, dryrun);
                 }
+
             }
+        }
+
+        if (!full && !skip) {
+            this.obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest, entityBatchSize, dryrun);
         }
         log.info("     source: " + src.getIdentifier());
         log.info("destination: " + dest.getIdentifier());
     }
-    
+
     public void setMinDate(Date d) {
         obsHarvester.setMinDate(d);
         if (obsDeleter != null) {
@@ -193,7 +207,7 @@ public class CaomHarvester implements Runnable {
             planeDataDeleter.setMinDate(d);
         }
     }
-    
+
     public void setMaxDate(Date d) {
         obsHarvester.setMaxDate(d);
         if (obsDeleter != null) {
@@ -232,9 +246,8 @@ public class CaomHarvester implements Runnable {
             boolean created = initdb.doInit();
             if (created) {
                 init = true; // database is empty so can bypass processing old
-            }                             // deletions
+            } // deletions
         }
-
         // clean up old access control tuples before harvest to avoid conflicts
         // from delete+create
         if (observationMetaDeleter != null) {
@@ -246,7 +259,6 @@ public class CaomHarvester implements Runnable {
             }
             observationMetaDeleter.setInitHarvestState(initDel);
             observationMetaDeleter.run();
-            log.info("init: " + observationMetaDeleter.cname);
         }
         if (planeDataDeleter != null) {
             boolean initDel = init;
@@ -257,7 +269,6 @@ public class CaomHarvester implements Runnable {
             }
             planeDataDeleter.setInitHarvestState(initDel);
             planeDataDeleter.run();
-            log.info("init: " + planeDataDeleter.cname);
         }
         if (planeMetaDeleter != null) {
             boolean initDel = init;
@@ -268,7 +279,6 @@ public class CaomHarvester implements Runnable {
             }
             planeMetaDeleter.setInitHarvestState(initDel);
             planeMetaDeleter.run();
-            log.info("init: " + planeMetaDeleter.cname);
         }
 
         // delete observations before harvest to avoid observationURI conflicts
@@ -282,6 +292,7 @@ public class CaomHarvester implements Runnable {
             }
             log.info("init: " + obsDeleter.source + " " + obsDeleter.cname);
             obsDeleter.setInitHarvestState(initDel);
+            log.debug("************** obsDeleter.run() ****************");
             obsDeleter.run();
         }
 
