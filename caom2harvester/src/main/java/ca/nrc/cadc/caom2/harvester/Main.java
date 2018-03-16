@@ -109,7 +109,7 @@ public class Main {
 
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom.harvester", Level.DEBUG);
-                //Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+                // Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
@@ -184,7 +184,7 @@ public class Main {
 
             boolean nosrc = (source == null || source.trim().length() == 0);
             boolean nosrv = (resourceID == null || resourceID.trim().length() == 0);
-            boolean nourls = ( obsBaseUrl == null || obsBaseUrl.trim().length() == 0 || delBaseUrl == null || delBaseUrl.trim().length() == 0 );
+            boolean nourls = (obsBaseUrl == null || obsBaseUrl.trim().length() == 0 || delBaseUrl == null || delBaseUrl.trim().length() == 0);
             if (nosrc && nosrv && nourls) {
                 log.warn("missing required argument: --source=<server.database.schema> | --resourceID=<identifier> | --obsBaseUrl=<URL> --delBaseUrl=<URL>");
                 usage();
@@ -195,9 +195,9 @@ public class Main {
             int nthreads = 1;
             if (resourceID != null) {
                 try {
-                    if(obsBaseUrl !=null && delBaseUrl!=null){
+                    if (obsBaseUrl != null && delBaseUrl != null) {
                         src = new HarvestResource(new URI(resourceID), new URL(obsBaseUrl), new URL(delBaseUrl), collection);
-                    }else{
+                    } else {
                         src = new HarvestResource(new URI(resourceID), collection);
                     }
                     if (am.isSet("threads")) {
@@ -329,9 +329,10 @@ public class Main {
 
                 try {
                     CaomValidator cv = new CaomValidator(dryrun, noChecksum, src, dest, batchSize);
-                    // [min,max] timestamps not supported by validator (only full)
-                    //cv.setMinDate(minDate);
-                    //cv.setMaxDate(maxDate);
+                    // [min,max] timestamps not supported by validator (only
+                    // full)
+                    // cv.setMinDate(minDate);
+                    // cv.setMaxDate(maxDate);
                     action = cv;
                 } catch (IOException ioex) {
 
@@ -379,7 +380,8 @@ public class Main {
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
-        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema> | --obsBaseUrl=<URL> --delBaseUrl=<URL> [--threads=<num threads>]");
+        sb.append("\n\nSource selection: --resourceID=<URI> [--threads=<num threads>] | --source=<server.database.schema> "
+                + "\n\n                  | --obsBaseUrl=<URL> --delBaseUrl=<URL> [--threads=<num threads>]");
         sb.append("\n         --resourceID : harvest from a caom2 repository service (e.g. ivo://cadc.nrc.ca/caom2repo)");
         sb.append("\n         --obsBaseUrl : Specific Observations service base URL (e.g. https://masttest.stsci.edu/partners/meta-service/obs-endpoint)");
         sb.append("\n         --delBaseUrl : Specific Deletion service base URL (e.g. https://masttest.stsci.edu/partners/meta-service/del-endpoint)");

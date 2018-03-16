@@ -66,10 +66,8 @@
  *
  ************************************************************************
  */
-package ca.nrc.cadc.caom2.harvester;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+package ca.nrc.cadc.caom2.harvester;
 
 import ca.nrc.cadc.caom2.repo.client.HttpRepoClient;
 import ca.nrc.cadc.caom2.repo.client.RegisteredRepoClient;
@@ -82,14 +80,11 @@ import ca.nrc.cadc.caom2.repo.client.RepoClient;
 public class RepoClientFactory {
     public static RepoClient getRepoClient(HarvestResource src, int nthreads) {
 
-        if (src.getObsBaseUrl()!=null && src.getDelBaseUrl()!=null) {
+        if (src.getObsBaseUrl() != null && src.getDelBaseUrl() != null) {
             return new HttpRepoClient(src.getResourceID(), nthreads, src.getObsBaseUrl(), src.getDelBaseUrl());
-        }else {
-            return new RegisteredRepoClient( src.getResourceID(), nthreads);
+        } else {
+            return new RegisteredRepoClient(src.getResourceID(), nthreads);
         }
 
     }
 }
-
-
-
