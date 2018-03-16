@@ -62,143 +62,29 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
+ *
  ************************************************************************
  */
 
 package ca.nrc.cadc.caom2.harvester;
 
-import java.net.URI;
-import java.net.URL;
-
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.repo.client.HttpRepoClient;
+import ca.nrc.cadc.caom2.repo.client.RegisteredRepoClient;
+import ca.nrc.cadc.caom2.repo.client.RepoClient;
 
 /**
- * Encapsulate the information about a source or destination for harvesting
- * instances.
+ * @author Raul Gutierrez-Sanchez
  *
- * @author pdowler
  */
-public class HarvestResource {
+public class RepoClientFactory {
+    public static RepoClient getRepoClient(HarvestResource src, int nthreads) {
 
-    private static final Logger log = Logger.getLogger(HarvestResource.class);
-
-    private String databaseServer;
-    private String database;
-    private String schema;
-    private boolean harvestAC;
-
-    private URI resourceID;
-    private String collection;
-    
-    private URL obsBaseUrl;
-    private URL delBaseUrl;
-
-    /**
-     * Create a HarvestResource for a database. This is suitable for a
-     * destination and
-     * when intending to harvest access control tuples.
-     *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection) {
-        this(databaseServer, database, schema, collection, true);
-    }
-
-    /**
-     * Create a HarvestResource for a database.
-     *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     * @param harvestAC true to enable harvesting access control tuples
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC) {
-        if (databaseServer == null || database == null || schema == null || collection == null) {
-            throw new IllegalArgumentException("args cannot be null");
+        if (src.getObsBaseUrl() != null && src.getDelBaseUrl() != null) {
+            return new HttpRepoClient(src.getResourceID(), nthreads, src.getObsBaseUrl(), src.getDelBaseUrl());
+        } else {
+            return new RegisteredRepoClient(src.getResourceID(), nthreads);
         }
-        this.databaseServer = databaseServer;
-        this.database = database;
-        this.schema = schema;
-        this.collection = collection;
-        this.harvestAC = harvestAC;
-    }
 
-    /**
-     * Create a HarvestResource from a URI
-     * @param resourceID
-     * @param collection
-     */
-    public HarvestResource(URI resourceID, String collection) {
-        if (resourceID == null || collection == null) {
-            throw new IllegalArgumentException("resourceID and collection args cannot be null");
-        }
-        this.resourceID = resourceID;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
     }
-
-    
-    
-    /**
-     * Create a HarvestResource given the Observation and Delete endpoints URLs
-     * @param resourceID
-     * @param collection
-     */
-    public HarvestResource(URI resourceID, URL obsBaseUrl, URL delBaseUrl, String collection) {
-        if (resourceID == null || obsBaseUrl == null || delBaseUrl == null || collection == null) {
-            throw new IllegalArgumentException("resourceID, obsBaseUrl, obsDelUrl and collection args cannot be null");
-        }
-        this.resourceID = resourceID;
-        this.obsBaseUrl = obsBaseUrl;
-        this.delBaseUrl = delBaseUrl;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
-    }
-    
-    
-    
-    public String getIdentifier() {
-        if (resourceID != null) {
-            return resourceID.toASCIIString() + "?" + collection;
-        }
-        return databaseServer + "." + database + "." + schema + "?" + collection;
-    }
-
-    public String getDatabaseServer() {
-        return databaseServer;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getSchema() {
-        return schema;
-    }
-
-    public boolean getHarvestAC() {
-        return harvestAC;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    public String getCollection() {
-        return collection;
-    }
-
-    public URL getObsBaseUrl() {
-        return obsBaseUrl;
-    }
-
-    public URL getDelBaseUrl() {
-        return delBaseUrl;
-    }
-    
-    
 }

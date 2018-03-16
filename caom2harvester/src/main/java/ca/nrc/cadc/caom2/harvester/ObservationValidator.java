@@ -120,7 +120,7 @@ public class ObservationValidator extends Harvester {
     private void init() throws IOException, URISyntaxException {
         if (src.getResourceID() != null) {
             // 1 thread since we only use the ObservationState listing
-            this.srcObservationService = new RepoClient(src.getResourceID(), 1);
+            this.srcObservationService = RepoClientFactory.getRepoClient(src, 1);
         } else {
             Map<String, Object> config1 = getConfigDAO(src);
             this.srcObservationDAO = new ObservationDAO();

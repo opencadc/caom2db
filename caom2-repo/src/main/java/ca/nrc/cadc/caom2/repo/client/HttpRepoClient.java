@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2011.                            (c) 2011.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,143 +62,48 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
+ *
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.repo.client;
 
 import java.net.URI;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
 
-/**
- * Encapsulate the information about a source or destination for harvesting
- * instances.
- *
- * @author pdowler
- */
-public class HarvestResource {
+public class HttpRepoClient extends AbstractRepoClient {
 
-    private static final Logger log = Logger.getLogger(HarvestResource.class);
-
-    private String databaseServer;
-    private String database;
-    private String schema;
-    private boolean harvestAC;
-
-    private URI resourceID;
-    private String collection;
-    
-    private URL obsBaseUrl;
-    private URL delBaseUrl;
+    private static final Logger log = Logger.getLogger(HttpRepoClient.class);
 
     /**
-     * Create a HarvestResource for a database. This is suitable for a
-     * destination and
-     * when intending to harvest access control tuples.
+     * Create new CAOM RepoClient.
      *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection) {
-        this(databaseServer, database, schema, collection, true);
-    }
-
-    /**
-     * Create a HarvestResource for a database.
-     *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     * @param harvestAC true to enable harvesting access control tuples
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC) {
-        if (databaseServer == null || database == null || schema == null || collection == null) {
-            throw new IllegalArgumentException("args cannot be null");
-        }
-        this.databaseServer = databaseServer;
-        this.database = database;
-        this.schema = schema;
-        this.collection = collection;
-        this.harvestAC = harvestAC;
-    }
-
-    /**
-     * Create a HarvestResource from a URI
      * @param resourceID
-     * @param collection
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
      */
-    public HarvestResource(URI resourceID, String collection) {
-        if (resourceID == null || collection == null) {
-            throw new IllegalArgumentException("resourceID and collection args cannot be null");
+    public HttpRepoClient(URI resourceID, int nthreads, URL baseServiceURL, URL baseDeletionURL) {
+        super(resourceID, nthreads);
+        setBaseServiceURL(baseServiceURL);
+        setBaseDeletionURL(baseDeletionURL);
+    }
+
+    protected void init() {
+        if (getBaseServiceURL() == null) {
+            throw new RuntimeException("observation list URL not defined");
         }
-        this.resourceID = resourceID;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
+        log.debug("observation list URL: " + getBaseServiceURL().toString());
     }
 
-    
-    
-    /**
-     * Create a HarvestResource given the Observation and Delete endpoints URLs
-     * @param resourceID
-     * @param collection
-     */
-    public HarvestResource(URI resourceID, URL obsBaseUrl, URL delBaseUrl, String collection) {
-        if (resourceID == null || obsBaseUrl == null || delBaseUrl == null || collection == null) {
-            throw new IllegalArgumentException("resourceID, obsBaseUrl, obsDelUrl and collection args cannot be null");
+    protected void initDel() {
+        if (getBaseDeletionURL() == null) {
+            throw new RuntimeException("deletion list URL not defined");
         }
-        this.resourceID = resourceID;
-        this.obsBaseUrl = obsBaseUrl;
-        this.delBaseUrl = delBaseUrl;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
-    }
-    
-    
-    
-    public String getIdentifier() {
-        if (resourceID != null) {
-            return resourceID.toASCIIString() + "?" + collection;
-        }
-        return databaseServer + "." + database + "." + schema + "?" + collection;
+        log.debug("deletion list URL: " + getBaseDeletionURL().toString());
     }
 
-    public String getDatabaseServer() {
-        return databaseServer;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getSchema() {
-        return schema;
-    }
-
-    public boolean getHarvestAC() {
-        return harvestAC;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    public String getCollection() {
-        return collection;
-    }
-
-    public URL getObsBaseUrl() {
-        return obsBaseUrl;
-    }
-
-    public URL getDelBaseUrl() {
-        return delBaseUrl;
-    }
-    
-    
 }

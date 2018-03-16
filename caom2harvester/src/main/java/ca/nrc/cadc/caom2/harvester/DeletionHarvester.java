@@ -165,7 +165,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             this.deletedDAO = new DeletedEntityDAO();
             deletedDAO.setConfig(config1);
         } else {
-            this.repoClient = new RepoClient(src.getResourceID(), 1);
+            this.repoClient = RepoClientFactory.getRepoClient(src, 1);
         }
 
         // destination

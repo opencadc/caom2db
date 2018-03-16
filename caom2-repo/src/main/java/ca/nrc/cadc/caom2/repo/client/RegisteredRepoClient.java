@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2011.                            (c) 2011.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,143 +62,72 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
+ *
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.harvester;
+package ca.nrc.cadc.caom2.repo.client;
+
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 
 import java.net.URI;
 import java.net.URL;
 
+import javax.security.auth.Subject;
+
 import org.apache.log4j.Logger;
 
-/**
- * Encapsulate the information about a source or destination for harvesting
- * instances.
- *
- * @author pdowler
- */
-public class HarvestResource {
+public class RegisteredRepoClient extends AbstractRepoClient {
 
-    private static final Logger log = Logger.getLogger(HarvestResource.class);
+    private static final Logger log = Logger.getLogger(RegisteredRepoClient.class);
 
-    private String databaseServer;
-    private String database;
-    private String schema;
-    private boolean harvestAC;
-
-    private URI resourceID;
-    private String collection;
-    
-    private URL obsBaseUrl;
-    private URL delBaseUrl;
+    private RegistryClient rc;
 
     /**
-     * Create a HarvestResource for a database. This is suitable for a
-     * destination and
-     * when intending to harvest access control tuples.
+     * Create new CAOM RepoClient.
      *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection) {
-        this(databaseServer, database, schema, collection, true);
-    }
-
-    /**
-     * Create a HarvestResource for a database.
-     *
-     * @param databaseServer server name in $HOME/.dbrc
-     * @param database database name in $HOME/.dbrc and query generation
-     * @param schema schema name for query generation
-     * @param collection name of collection to harvest
-     * @param harvestAC true to enable harvesting access control tuples
-     */
-    public HarvestResource(String databaseServer, String database, String schema, String collection, boolean harvestAC) {
-        if (databaseServer == null || database == null || schema == null || collection == null) {
-            throw new IllegalArgumentException("args cannot be null");
-        }
-        this.databaseServer = databaseServer;
-        this.database = database;
-        this.schema = schema;
-        this.collection = collection;
-        this.harvestAC = harvestAC;
-    }
-
-    /**
-     * Create a HarvestResource from a URI
      * @param resourceID
-     * @param collection
+     *            the service identifier
+     * @param nthreads
+     *            number of threads to use when getting list of observations
      */
-    public HarvestResource(URI resourceID, String collection) {
-        if (resourceID == null || collection == null) {
-            throw new IllegalArgumentException("resourceID and collection args cannot be null");
+    public RegisteredRepoClient(URI resourceID, int nthreads) {
+        super(resourceID, nthreads);
+        this.rc = new RegistryClient();
+    }
+
+    protected void init() {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null) {
+            meth = AuthMethod.ANON;
         }
-        this.resourceID = resourceID;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
-    }
-
-    
-    
-    /**
-     * Create a HarvestResource given the Observation and Delete endpoints URLs
-     * @param resourceID
-     * @param collection
-     */
-    public HarvestResource(URI resourceID, URL obsBaseUrl, URL delBaseUrl, String collection) {
-        if (resourceID == null || obsBaseUrl == null || delBaseUrl == null || collection == null) {
-            throw new IllegalArgumentException("resourceID, obsBaseUrl, obsDelUrl and collection args cannot be null");
+        URL baseServiceURL = rc.getServiceURL(super.getResourceID(), Standards.CAOM2REPO_OBS_23, meth);
+        if (baseServiceURL == null) {
+            throw new RuntimeException("not found: " + super.getResourceID() + " + " + Standards.CAOM2REPO_OBS_23 + " + " + meth);
         }
-        this.resourceID = resourceID;
-        this.obsBaseUrl = obsBaseUrl;
-        this.delBaseUrl = delBaseUrl;
-        this.collection = collection;
-        this.harvestAC = true; // no API for this
+        super.setBaseServiceURL(baseServiceURL);
+        log.debug("observation list URL: " + baseServiceURL.toString());
+        log.debug("AuthMethod:  " + meth);
     }
-    
-    
-    
-    public String getIdentifier() {
-        if (resourceID != null) {
-            return resourceID.toASCIIString() + "?" + collection;
+
+    protected void initDel() {
+        Subject s = AuthenticationUtil.getCurrentSubject();
+        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
+        if (meth == null) {
+            meth = AuthMethod.ANON;
         }
-        return databaseServer + "." + database + "." + schema + "?" + collection;
+        URL baseDeletionURL = rc.getServiceURL(super.getResourceID(), Standards.CAOM2REPO_DEL_23, meth);
+        if (baseDeletionURL == null) {
+            throw new RuntimeException("not found: " + super.getResourceID() + " + " + Standards.CAOM2REPO_DEL_23 + " + " + meth);
+        }
+        super.setBaseDeletionURL(baseDeletionURL);
+        log.debug("deletion list URL: " + baseDeletionURL.toString());
+        log.debug("AuthMethod:  " + meth);
     }
 
-    public String getDatabaseServer() {
-        return databaseServer;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getSchema() {
-        return schema;
-    }
-
-    public boolean getHarvestAC() {
-        return harvestAC;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    public String getCollection() {
-        return collection;
-    }
-
-    public URL getObsBaseUrl() {
-        return obsBaseUrl;
-    }
-
-    public URL getDelBaseUrl() {
-        return delBaseUrl;
-    }
-    
-    
 }
