@@ -260,17 +260,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     return result;
                 }
                 
-                // determine the subtype of StorageResolver to use and translate uri to url
-                StorageResolver resolver = null;
-                URL url = null;
-                if ("mast".equals(artifactURI.getScheme())) {
-                    resolver = new MastResolver();
-                } else if ("gemini".equals(artifactURI.getScheme())) {
-                    resolver = new GeminiResolver();
-                } else {
-                    throw new IllegalArgumentException("unsupported scheme in artifactURI: " + artifactURI.toString());
-                }
-                url = resolver.toURL(artifactURI);
+                URL url = artifactStore.toURL(artifactURI);
 
                 metadata = new FileMetadata();
                 metadata.setContentType(artifact.contentType);

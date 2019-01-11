@@ -74,6 +74,7 @@ import ca.nrc.cadc.util.FileMetadata;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Set;
 
@@ -160,6 +161,18 @@ public interface ArtifactStore {
      */
     public String toStorageID(String artifactURI) throws IllegalArgumentException;
 
+    
+    /**
+     * Convert the specified URI to one URL. 
+     * 
+     * @throws IllegalArgumentException if the uri is malformed such that a 
+     * 			URL cannot be generated, or the uri is null
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
+     */
+    public URL toURL(URI uri)
+        throws IllegalArgumentException;
+    
     /**
      * Process results from a batch of files downloaded.
      *
