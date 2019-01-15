@@ -161,18 +161,18 @@ public interface ArtifactStore {
      */
     public String toStorageID(String artifactURI) throws IllegalArgumentException;
 
-    
     /**
-     * Convert the specified URI to one URL. 
+     * Convert the specified URI to one URL.
      * 
-     * @throws IllegalArgumentException if the uri is malformed such that a 
-     * 			URL cannot be generated, or the uri is null
-     * @param uri the URI to convert
+     * @param uri
+     *            the URI to convert
      * @return a URL to the identified resource
+     * @throws IllegalArgumentException
+     *             if the uri is malformed such that a URL cannot be generated,
+     *             or the uri is null
      */
-    public URL toURL(URI uri)
-        throws IllegalArgumentException;
-    
+    public URL toURL(URI uri) throws IllegalArgumentException;
+
     /**
      * Process results from a batch of files downloaded.
      *
