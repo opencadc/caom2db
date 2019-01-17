@@ -1,4 +1,4 @@
-package ca.nrc.cadc.caom2.artifact;
+package ca.nrc.cadc.caom2.artifactsync;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -6,6 +6,8 @@ import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Set;
 
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifactsync.StorageResolverFactory;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.TransientException;
