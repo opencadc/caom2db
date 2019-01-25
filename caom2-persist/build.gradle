@@ -20,8 +20,7 @@ version = '2.3.8'
 dependencies {
     compile 'log4j:log4j:1.2.+'
     
-    compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:caom2:[2.3.13,)'
+    compile 'org.opencadc:caom2:2.3.+'
 
     testCompile 'junit:junit:4.+'
 }
