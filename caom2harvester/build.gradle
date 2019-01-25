@@ -26,18 +26,13 @@ dependencies {
     compile 'org.jdom:jdom2:2.+'
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
-    compile 'org.opencadc:cadc-util:[1.2.2,)'
-    compile 'org.opencadc:caom2:[2.3.9,)'
-    compile 'org.opencadc:caom2persistence:[2.3.26,)'
-    compile 'org.opencadc:cadc-util:[1.0.14,)'
-    compile 'org.opencadc:caom2-repo:[1.3,)'
-    compile 'org.opencadc:caom2-persist:[2.3.3,)'
+    compile 'org.opencadc:caom2persistence:2.3.+'
     
     // needed to run plane metadata compute plugin (--compute)
-    compile 'org.opencadc:caom2-compute:[2.3.14,)'
+    compile 'org.opencadc:caom2-compute:2.3.+'
     
     // needed to run access-control regen plugin (--generate-ac)
-    compile 'org.opencadc:caom2-access-control:[2.3.1,)'
+    compile 'org.opencadc:caom2-access-control:2.3.+'
 
     runtime 'net.sourceforge.jtds:jtds:1.+'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
