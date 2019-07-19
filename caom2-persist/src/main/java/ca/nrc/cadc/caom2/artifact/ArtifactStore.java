@@ -69,11 +69,13 @@
 
 package ca.nrc.cadc.caom2.artifact;
 
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Set;
 
@@ -108,6 +110,45 @@ public interface ArtifactStore {
      */
     public boolean contains(URI artifactURI, URI checksum)
             throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+
+    /**
+     * Get a header containing information, e.g. Content-Length, checksum, of the specified artifact.
+     *
+     * @param artifactURL
+     *            The URL of the artifact in storage.
+     * @return HttpDownload instance with header containing information on the artifact in storage.
+     *
+     * @throws IllegalArgumentException
+     *             If an aspect of the artifact uri is incorrect.
+     * @throws AccessControlException
+     *             If the calling user is not allowed to perform the query.
+     */
+    public HttpDownload downloadHeader(URL artifactURL)
+            throws IllegalArgumentException, AccessControlException;
+    
+    /**
+     * Get a header containing information, e.g. Content-Length, checksum, of the specified artifact.
+     *
+     * @param artifactURI
+     *            The artifact identifier.
+     * @return URL of the artifact or null if the URI does not resolve to a URL.
+     *
+     * @throws IllegalArgumentException
+     *             If an aspect of the artifact uri is incorrect.
+     */
+    public URL resolveURI(URI artifactURI)
+            throws IllegalArgumentException;
+
+   /**
+    * @param checksum
+    *            The checksum of the artifact.
+    * @return the MD5 checksum.
+    *
+    * @throws UnsupportedOperationException
+    *             If the artifact uri cannot be resolved.
+    */
+    public String getMD5Sum(URI checksum)
+    		throws UnsupportedOperationException;
 
     /**
      * Get the storage policy based on the collection provided.
