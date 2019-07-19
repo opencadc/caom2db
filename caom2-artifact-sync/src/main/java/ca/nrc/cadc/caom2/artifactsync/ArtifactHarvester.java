@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -83,6 +84,11 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.TransientException;
+
+import java.net.URI;
+import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.util.Date;
@@ -104,11 +110,19 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private ArtifactStore artifactStore;
     private HarvestStateDAO harvestStateDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
-    private String collection; // Will be used in the future
+    private String collection; 
+    private StoragePolicy storagePolicy;
     private int batchSize;
     private String source;
     private Date startDate;
     private DateFormat df;
+    private String caomChecksum;
+    private String storageChecksum;
+    private String caomContentLength;
+    private long storageContentLength;
+	private String reason = "None";
+	private String errorMessage;
+    
     
     // reset each run
     long downloadCount = 0;
@@ -122,8 +136,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         this.artifactStore = artifactStore;
         this.batchSize = batchSize;
         this.source = harvestResource.getIdentifier();
-
         this.collection = harvestResource.getCollection();
+        this.storagePolicy = artifactStore.getStoragePolicy(collection);
         String database = harvestResource.getDatabase();
         String schema = harvestResource.getSchema();
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(observationDAO.getDataSource(), database, schema);
@@ -201,12 +215,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                     // null date means private
                                     log.debug("null release date, skipping");
                                 } else {
-                                    logStart(artifact);
+                                    logStart(format(state.curID), artifact);
                                     boolean success = true;
                                     boolean addToSkip = false;
                                     boolean added = false;
                                     String message = null;
-                                    String errorMessage = null;
+                                    errorMessage = null;
                                     processedCount++;
                                     
                                     if (releaseDate.after(start)) {
@@ -214,30 +228,40 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         errorMessage = ArtifactHarvester.PROPRIETARY;
                                     }
                                     
-                                    // see if there's already an entry
-                                    HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                    if (skip == null) {
-                                        // not in skip table but may be in artifactStore already, may be private or public
-                                        skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
-                                        addToSkip = true;
-                                    } else {
-                                        message = "Artifact already exists in skip table.";
-                                        if (errorMessage != null) {
-                                            // artifact is private
-                                            addToSkip = true;
-                                            skip.setTryAfter(releaseDate);
-                                            skip.errorMessage = errorMessage;
-                                        }
-                                    }
-                                    
                                     try {
-                                        if (addToSkip && errorMessage == null) {
-                                            // public artifact not in skip table
-                                            boolean correctCopy = artifactStore.contains(artifact.getURI(), artifact
-                                                    .contentChecksum);
+                                    	// by default, do not add to the skip table
+                                    	boolean correctCopy = true;
+                                    	
+                                    	// artifact is not in storage if storage policy is 'PUBLIC ONLY' and the artifact is proprietary
+                                        if ((StoragePolicy.ALL == storagePolicy) || errorMessage == null) {
+                                        	// correctCopy is false if: checksum mismatch, content length mismatch or not in storage
+                                        	// "not in storage" includes failing to resolve the artifact URI
+                                        	correctCopy = checkArtifactInStorage(artifact.getURI(), artifact.contentChecksum, artifact.contentLength);
                                             log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
                                                 .contentChecksum + " correct copy: " + correctCopy);
-                                            addToSkip = !correctCopy;
+                                        }
+                                        
+                                        if ((StoragePolicy.PUBLIC_ONLY == storagePolicy && errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
+                                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
+                                            if (skip == null) {
+                                                // not in skip table, add it
+                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
+                                                addToSkip = true;
+                                            } else {
+                                                message = "Artifact already exists in skip table.";
+                                                if (errorMessage == ArtifactHarvester.PROPRIETARY) {
+                                                    // artifact is private, update skip table
+                                                    skip.setTryAfter(releaseDate);
+                                                    skip.errorMessage = errorMessage;
+                                                    addToSkip = true;
+                                                }
+                                            }
+                                        	
+                                            if (addToSkip) {
+	                                            harvestSkipURIDAO.put(skip);
+	                                            downloadCount++;
+	                                            added = true;
+                                            }
                                         }
                                     } catch (Exception ex) {
                                         success = false;
@@ -245,13 +269,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                         log.error(message, ex);
                                     }
                                     
-                                    if (addToSkip) {
-                                        harvestSkipURIDAO.put(skip);
-                                        added = true;
-                                        downloadCount++;
-                                    }
-                                    
-                                    logEnd(artifact, success, added, message);
+                                    logEnd(format(state.curID), artifact, success, added, message);
                                 }
                             }
                         }
@@ -275,7 +293,104 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         }
 
     }
+    
+    private boolean checkContentLength(HttpDownload httpHead, Long contentLength) {
+    	// no contentLength in a CAOM artifact is considered a match
+    	if (contentLength == null) {
+    		caomContentLength = "null";
+    		return true;
+    	} else if (contentLength == 0) {
+    		caomContentLength = Long.toString(contentLength);
+    		return true;
+    	} else {
+    		caomContentLength = Long.toString(contentLength);
+    		storageContentLength = httpHead.getContentLength();
+    		if (storageContentLength == contentLength) {
+    			return true;
+    		} else {
+            	reason = "contentLengths are different";
+            	errorMessage = reason;
+            	return false;
+    		}
+    	}
+    	
 
+    }
+    
+    private boolean checkChecksum(HttpDownload httpHead, URI checksum) {       
+        String expectedMD5 = artifactStore.getMD5Sum(checksum);
+        log.debug("Expected MD5: " + expectedMD5);
+        if (expectedMD5 == null) {
+    		// no checksum in a CAOM artifact is considered a match
+        	reason = "null checksum";
+        	caomChecksum = "null";
+        	return true;
+        } else {
+        	caomChecksum = expectedMD5;
+        }
+        
+        String contentMD5 = httpHead.getContentMD5();
+        log.debug("Found matching artifact with md5 " + contentMD5);
+        storageChecksum = contentMD5;
+        if (expectedMD5.equalsIgnoreCase(contentMD5)) {
+        	return true;
+        } else {
+        	reason = "checksums are different";
+        	errorMessage = reason;
+        	return false;
+        }
+    }
+    
+    private boolean checkArtifactInStorage(URI artifactURI, URI checksum, Long contentLength) throws TransientException {
+        URL url = artifactStore.resolveURI(artifactURI);
+        if (url == null) {
+        	reason = "could not resolve artifact URI";
+        	errorMessage = reason;
+            log.debug("Failed to resolve artifact URI: " + artifactURI);
+            return false;
+        }
+        
+        HttpDownload httpHead = artifactStore.downloadHeader(url);
+        int respCode = httpHead.getResponseCode();
+        log.debug("Response code: " + respCode);
+        if (httpHead.getThrowable() == null && respCode == 200) {
+            if (checkChecksum(httpHead, checksum)) {
+            	return checkContentLength(httpHead, contentLength);
+            } else {
+            	return false;
+            }
+        }
+
+        if (httpHead.getResponseCode() == 404) {
+            log.debug("Artifact not found");
+            reason = "artifact not in storage";
+            errorMessage = reason;
+            return false;
+        }
+
+        // redirects mean that a copy isn't local
+        if (httpHead.getResponseCode() == 303 || httpHead.getResponseCode() == 302) {
+            log.debug("Redirected to another source");
+            reason = "artifact not in local storage";
+            errorMessage = reason;
+            return false;
+        }
+
+        if (httpHead.getThrowable() != null) {
+            if (httpHead.getThrowable() instanceof TransientException) {
+                log.debug("Transient Exception");
+                reason = "transient exception: " + httpHead.getThrowable().getMessage();
+                throw (TransientException) httpHead.getThrowable();
+            }
+
+            reason = "unexpected exception: " + httpHead.getThrowable().getMessage();
+            throw new RuntimeException("Unexpected", httpHead.getThrowable());
+        }
+
+        reason = "unexpected response code: " + respCode;
+        throw new RuntimeException("unexpected response code " + respCode);
+    }
+    
     private String format(UUID id) {
         if (id == null) {
             return "null";
@@ -283,9 +398,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         return id.toString();
     }
     
-    private void logStart(Artifact artifact) {
+    private void logStart(String observationID, Artifact artifact) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("START: {");
+        startMessage.append("\"observationID\":\"").append(observationID).append("\"");
+        startMessage.append(",");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
         startMessage.append(",");
         startMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
@@ -293,14 +410,29 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         log.info(startMessage.toString());
     }
 
-    private void logEnd(Artifact artifact, boolean success, boolean added, String message) {
+    private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
         StringBuilder startMessage = new StringBuilder();
         startMessage.append("END: {");
+        startMessage.append("\"observationID\":\"").append(observationID).append("\"");
+        startMessage.append(",");
         startMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
         startMessage.append(",");
         startMessage.append("\"success\":\"").append(success).append("\"");
         startMessage.append(",");
         startMessage.append("\"added\":\"").append(added).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"reason\":\"").append(reason).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"caomChecksum\":\"").append(caomChecksum).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"caomContentLength\":\"").append(caomContentLength).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"storageChecksum\":\"").append(storageChecksum).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"storageContentLength\":\"").append(storageContentLength).append("\"");
+        startMessage.append(",");
+        startMessage.append("\"collection\":\"").append(collection).append("\"");
+        startMessage.append(",");
         if (message != null) {
             startMessage.append(",");
             startMessage.append("\"message\":\"").append(message).append("\"");
