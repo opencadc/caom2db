@@ -102,7 +102,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
-    public static final String PROPRIETARY = "proprietary";
+    public static final String PROPRIETARY = "Proprietary";
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
@@ -248,12 +248,14 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                                 skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, errorMessage);
                                                 addToSkip = true;
                                             } else {
-                                                message = "Artifact already exists in skip table.";
                                                 if (errorMessage == ArtifactHarvester.PROPRIETARY) {
                                                     // artifact is private, update skip table
+                                                    message = errorMessage + " artifact already exists in skip table.";
                                                     skip.setTryAfter(releaseDate);
                                                     skip.errorMessage = errorMessage;
                                                     addToSkip = true;
+                                                } else {
+                                                    message = "Public artifact already exists in skip table.";
                                                 }
                                             }
                                         	
@@ -308,7 +310,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     		if (storageContentLength == contentLength) {
     			return true;
     		} else {
-            	reason = "contentLengths are different";
+            	reason = "ContentLengths are different";
             	errorMessage = reason;
             	return false;
     		}
@@ -322,7 +324,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         log.debug("Expected MD5: " + expectedMD5);
         if (expectedMD5 == null) {
     		// no checksum in a CAOM artifact is considered a match
-        	reason = "null checksum";
+        	reason = "Null checksum";
         	caomChecksum = "null";
         	return true;
         } else {
@@ -335,7 +337,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         if (expectedMD5.equalsIgnoreCase(contentMD5)) {
         	return true;
         } else {
-        	reason = "checksums are different";
+        	reason = "Checksums are different";
         	errorMessage = reason;
         	return false;
         }
@@ -344,7 +346,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private boolean checkArtifactInStorage(URI artifactURI, URI checksum, Long contentLength) throws TransientException {
         URL url = artifactStore.resolveURI(artifactURI);
         if (url == null) {
-        	reason = "could not resolve artifact URI";
+        	reason = "Could not resolve artifact URI";
         	errorMessage = reason;
             log.debug("Failed to resolve artifact URI: " + artifactURI);
             return false;
@@ -363,7 +365,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
         if (httpHead.getResponseCode() == 404) {
             log.debug("Artifact not found");
-            reason = "artifact not in storage";
+            reason = "Artifact not in storage";
             errorMessage = reason;
             return false;
         }
@@ -371,7 +373,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         // redirects mean that a copy isn't local
         if (httpHead.getResponseCode() == 303 || httpHead.getResponseCode() == 302) {
             log.debug("Redirected to another source");
-            reason = "artifact not in local storage";
+            reason = "Artifact not in local storage";
             errorMessage = reason;
             return false;
         }
@@ -379,15 +381,15 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         if (httpHead.getThrowable() != null) {
             if (httpHead.getThrowable() instanceof TransientException) {
                 log.debug("Transient Exception");
-                reason = "transient exception: " + httpHead.getThrowable().getMessage();
+                reason = "Transient exception: " + httpHead.getThrowable().getMessage();
                 throw (TransientException) httpHead.getThrowable();
             }
 
-            reason = "unexpected exception: " + httpHead.getThrowable().getMessage();
+            reason = "Unexpected exception: " + httpHead.getThrowable().getMessage();
             throw new RuntimeException("Unexpected", httpHead.getThrowable());
         }
 
-        reason = "unexpected response code: " + respCode;
+        reason = "Unexpected response code: " + respCode;
         throw new RuntimeException("unexpected response code " + respCode);
     }
     
@@ -432,7 +434,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         startMessage.append("\"storageContentLength\":\"").append(storageContentLength).append("\"");
         startMessage.append(",");
         startMessage.append("\"collection\":\"").append(collection).append("\"");
-        startMessage.append(",");
         if (message != null) {
             startMessage.append(",");
             startMessage.append("\"message\":\"").append(message).append("\"");
