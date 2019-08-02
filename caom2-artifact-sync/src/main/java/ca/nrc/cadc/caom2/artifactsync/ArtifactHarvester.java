@@ -120,8 +120,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private String storageChecksum;
     private String caomContentLength;
     private long storageContentLength;
-	private String reason = "None";
-	private String errorMessage;
+    private String reason = "None";
+    private String errorMessage;
     
     
     // reset each run
@@ -229,14 +229,14 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                     }
                                     
                                     try {
-                                    	// by default, do not add to the skip table
-                                    	boolean correctCopy = true;
-                                    	
-                                    	// artifact is not in storage if storage policy is 'PUBLIC ONLY' and the artifact is proprietary
+                                        // by default, do not add to the skip table
+                                        boolean correctCopy = true;
+
+                                        // artifact is not in storage if storage policy is 'PUBLIC ONLY' and the artifact is proprietary
                                         if ((StoragePolicy.ALL == storagePolicy) || errorMessage == null) {
-                                        	// correctCopy is false if: checksum mismatch, content length mismatch or not in storage
-                                        	// "not in storage" includes failing to resolve the artifact URI
-                                        	correctCopy = checkArtifactInStorage(artifact.getURI(), artifact.contentChecksum, artifact.contentLength);
+                                            // correctCopy is false if: checksum mismatch, content length mismatch or not in storage
+                                            // "not in storage" includes failing to resolve the artifact URI
+                                            correctCopy = checkArtifactInStorage(artifact.getURI(), artifact.contentChecksum, artifact.contentLength);
                                             log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
                                                 .contentChecksum + " correct copy: " + correctCopy);
                                         }
@@ -258,11 +258,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                                                     message = "Public artifact already exists in skip table.";
                                                 }
                                             }
-                                        	
+
                                             if (addToSkip) {
-	                                            harvestSkipURIDAO.put(skip);
-	                                            downloadCount++;
-	                                            added = true;
+                                                harvestSkipURIDAO.put(skip);
+                                                downloadCount++;
+                                                added = true;
                                             }
                                         }
                                     } catch (Exception ex) {
@@ -297,57 +297,55 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
     
     private boolean checkContentLength(HttpDownload httpHead, Long contentLength) {
-    	// no contentLength in a CAOM artifact is considered a match
-    	if (contentLength == null) {
-    		caomContentLength = "null";
-    		return true;
-    	} else if (contentLength == 0) {
-    		caomContentLength = Long.toString(contentLength);
-    		return true;
-    	} else {
-    		caomContentLength = Long.toString(contentLength);
-    		storageContentLength = httpHead.getContentLength();
-    		if (storageContentLength == contentLength) {
-    			return true;
-    		} else {
-            	reason = "ContentLengths are different";
-            	errorMessage = reason;
-            	return false;
-    		}
-    	}
-    	
-
+        // no contentLength in a CAOM artifact is considered a match
+        if (contentLength == null) {
+            caomContentLength = "null";
+            return true;
+        } else if (contentLength == 0) {
+            caomContentLength = Long.toString(contentLength);
+            return true;
+        } else {
+            caomContentLength = Long.toString(contentLength);
+            storageContentLength = httpHead.getContentLength();
+            if (storageContentLength == contentLength) {
+                return true;
+            } else {
+                reason = "ContentLengths are different";
+                errorMessage = reason;
+                return false;
+            }
+        }
     }
     
     private boolean checkChecksum(HttpDownload httpHead, URI checksum) {       
         String expectedMD5 = artifactStore.getMD5Sum(checksum);
         log.debug("Expected MD5: " + expectedMD5);
         if (expectedMD5 == null) {
-    		// no checksum in a CAOM artifact is considered a match
-        	reason = "Null checksum";
-        	caomChecksum = "null";
-        	return true;
+            // no checksum in a CAOM artifact is considered a match
+            reason = "Null checksum";
+            caomChecksum = "null";
+            return true;
         } else {
-        	caomChecksum = expectedMD5;
+            caomChecksum = expectedMD5;
         }
         
         String contentMD5 = httpHead.getContentMD5();
         log.debug("Found matching artifact with md5 " + contentMD5);
         storageChecksum = contentMD5;
         if (expectedMD5.equalsIgnoreCase(contentMD5)) {
-        	return true;
+            return true;
         } else {
-        	reason = "Checksums are different";
-        	errorMessage = reason;
-        	return false;
+            reason = "Checksums are different";
+            errorMessage = reason;
+            return false;
         }
     }
     
     private boolean checkArtifactInStorage(URI artifactURI, URI checksum, Long contentLength) throws TransientException {
         URL url = artifactStore.resolveURI(artifactURI);
         if (url == null) {
-        	reason = "Could not resolve artifact URI";
-        	errorMessage = reason;
+            reason = "Could not resolve artifact URI";
+            errorMessage = reason;
             log.debug("Failed to resolve artifact URI: " + artifactURI);
             return false;
         }
@@ -357,9 +355,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
         log.debug("Response code: " + respCode);
         if (httpHead.getThrowable() == null && respCode == 200) {
             if (checkChecksum(httpHead, checksum)) {
-            	return checkContentLength(httpHead, contentLength);
+                return checkContentLength(httpHead, contentLength);
             } else {
-            	return false;
+                return false;
             }
         }
 
