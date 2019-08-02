@@ -139,16 +139,16 @@ public interface ArtifactStore {
     public URL resolveURI(URI artifactURI)
             throws IllegalArgumentException;
 
-   /**
-    * @param checksum
-    *            The checksum of the artifact.
-    * @return the MD5 checksum.
-    *
-    * @throws UnsupportedOperationException
-    *             If the artifact uri cannot be resolved.
-    */
+    /**
+     * @param checksum
+     *            The checksum of the artifact.
+     * @return the MD5 checksum.
+     *
+     * @throws UnsupportedOperationException
+     *             If the artifact uri cannot be resolved.
+     */
     public String getMD5Sum(URI checksum)
-    		throws UnsupportedOperationException;
+            throws UnsupportedOperationException;
 
     /**
      * Get the storage policy based on the collection provided.
