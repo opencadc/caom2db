@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo;
 
-import ca.nrc.cadc.ac.GroupURI;
 import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -90,6 +89,7 @@ import java.util.Properties;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.opencadc.gms.GroupURI;
 
 /**
  *
@@ -170,14 +170,11 @@ public class CaomRepoConfig {
         @Override
         public Item next() {
             Item ret = iter.next();
-            try {
-                initDB(ret);
-            } catch (Exception ex) {
-                log.error("CAOM database INIT FAILED", ex);
-            }
+            initDB(ret);
             return ret;
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }
@@ -190,8 +187,7 @@ public class CaomRepoConfig {
                 InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
                 init.doInit();
             } catch (NamingException ex) {
-                throw new RuntimeException("CONFIG ERROR: failed to init or recognise database",
-                        ex);
+                throw new RuntimeException("CONFIG: failed to connect to database", ex);
             }
         }
     }
