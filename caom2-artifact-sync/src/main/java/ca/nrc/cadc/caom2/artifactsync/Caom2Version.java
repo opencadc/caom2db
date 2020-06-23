@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,98 +69,30 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.util.Log4jInit;
-
+import ca.nrc.cadc.util.PropertiesReader;
 import java.util.List;
-
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * Command line entry point for running the caom2-artifact-sync tool.
+ * A class to provide a method to obtain the version of the 
+ * artifact-sync service. The version resides in the version.properties
+ * file as a key/value pair, i.e. Version=<version>.
  *
- * @author majorb
+ * @author yeunga
  */
-public class Main {
+public class Caom2Version {
 
-    private static Logger log = Logger.getLogger(Main.class);
-    private static Caom2ArtifactSync command;
+    private static Logger log = Logger.getLogger(Caom2Version.class);
+    private static final String VERSION_KEY = "Version";
+    private static final String VERSION_CONFIG = "version.properties";
 
-    public static void main(String[] args) {
-        try {
-            Log4jInit.setLevel("ca.nrc.cadc.caom2.artifactsync", Level.INFO);
-            ArgumentMap am = new ArgumentMap(args);
-            List<String> positionalArgs = am.getPositionalArgs();
-            if (positionalArgs.size() == 0) {
-                if (am.isSet("h") || am.isSet("help")) {
-                    // help on caom2-artifact-sync
-                    printUsage();
-                } else {
-                    String msg = "Missing a valid mode: discover, download, validate, diff.";
-                    exitWithErrorUsage(msg);
-                }
-            } else if (positionalArgs.size() > 1) {
-                String msg = "Only one valid mode is allowed: discover, download, validate, diff.";
-                exitWithErrorUsage(msg);
-            } else {
-                if (am.isSet("V") || am.isSet("version")) {
-                    // get the version of artifact-sync service
-                    String version = Caom2Version.getVersion();
-                    if (version == null) {
-                        log.info("no version information available");
-                    } else {
-                        log.info(version);
-                    }
-                } else {
-                    // one mode is specified
-                    String mode = positionalArgs.get(0);
-                    if (mode.equals("discover") || mode.equals("download")) {
-                        command = new Discover(am);
-                        command.execute();
-                        System.exit(command.getExitValue());
-                    } else if (mode.equals("validate") || mode.equals("diff")) {
-                        command = new Validate(am);
-                        command.execute();
-                        System.exit(command.getExitValue());
-                    } else {
-                        String msg = "Unsupported mode: " + mode;
-                        exitWithErrorUsage(msg);
-                    }
-                }
-            }
-
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
-            System.exit(-1);
+    public static String getVersion() {
+        PropertiesReader pr = new PropertiesReader(VERSION_CONFIG);
+        List<String> values = pr.getPropertyValues(VERSION_KEY);
+        if (values != null) {
+            return values.get(0);
+        } else {
+                return null;
         }
-    }
-
-    private static void printUsage() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
-        sb.append("\n\n    use '").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> <-h|--help>' to get help on a <mode>");
-        sb.append("\n    where <mode> can be one of:");
-        sb.append("\n        discover: Incrementally harvest artifacts");
-        sb.append("\n        download: Download artifacts");
-        sb.append("\n        validate: Discover missing artifacts and update the HarvestSkipURI table");
-        sb.append("\n        diff: Discover and report missing artifacts");
-        sb.append("\n\n    optional general args:");
-        sb.append("\n        -v | --verbose");
-        sb.append("\n        -d | --debug");
-        sb.append("\n        -h | --help");
-        sb.append("\n        --profile : Profile task execution");
-        sb.append("\n\n    authentication:");
-        sb.append("\n        [--netrc|--cert=<pem file>]");
-        sb.append("\n        --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n        --cert=<pem file> : read client certificate from PEM file");
-
-        log.warn(sb.toString());    
-    }
-
-    private static void exitWithErrorUsage(String msg) {
-        log.error(msg);
-        printUsage();
-        System.exit(-1);
     }
 }

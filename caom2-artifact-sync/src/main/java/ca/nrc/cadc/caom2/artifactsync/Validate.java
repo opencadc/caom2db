@@ -156,6 +156,7 @@ public class Validate extends Caom2ArtifactSync {
             sb.append("\n        --collection=<collection> : The collection to validate");
         }
         sb.append("\n\n    optional general args:");
+        sb.append("\n        -V | --version");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");
         sb.append("\n        -h | --help");

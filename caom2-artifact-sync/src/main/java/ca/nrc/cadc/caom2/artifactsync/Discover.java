@@ -188,6 +188,7 @@ public class Discover extends Caom2ArtifactSync {
             sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
         }
         sb.append("\n\n    optional general args:");
+        sb.append("\n        -V | --version");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");
         sb.append("\n        -h | --help");
