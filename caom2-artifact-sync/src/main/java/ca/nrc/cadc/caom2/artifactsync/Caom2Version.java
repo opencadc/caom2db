@@ -76,7 +76,7 @@ import org.apache.log4j.Logger;
 /**
  * A class to provide a method to obtain the version of the 
  * artifact-sync service. The version resides in the version.properties
- * file as a key/value pair, i.e. Version=<version>.
+ * file as a key/value pair, i.e. Version=<build version>.
  *
  * @author yeunga
  */
