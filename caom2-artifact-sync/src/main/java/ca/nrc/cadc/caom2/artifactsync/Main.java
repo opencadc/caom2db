@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -96,6 +96,8 @@ public class Main {
                 if (am.isSet("h") || am.isSet("help")) {
                     // help on caom2-artifact-sync
                     printUsage();
+                } else if (am.isSet("V") || am.isSet("version")) {
+                    printVersion();
                 } else {
                     String msg = "Missing a valid mode: discover, download, validate, diff.";
                     exitWithErrorUsage(msg);
@@ -105,13 +107,7 @@ public class Main {
                 exitWithErrorUsage(msg);
             } else {
                 if (am.isSet("V") || am.isSet("version")) {
-                    // get the version of artifact-sync service
-                    String version = Caom2Version.getVersion();
-                    if (version == null) {
-                        log.info("no version information available");
-                    } else {
-                        log.info(version);
-                    }
+                    printVersion();
                 } else {
                     // one mode is specified
                     String mode = positionalArgs.get(0);
@@ -136,6 +132,16 @@ public class Main {
         }
     }
 
+    private static void printVersion() {
+        // get the version of artifact-sync service
+        String version = Caom2Version.getVersion();
+        if (version == null) {
+            log.info("no version information available");
+        } else {
+            log.info(version);
+        }
+    }
+
     private static void printUsage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(Caom2ArtifactSync.getApplicationName()).append(" <mode> [mode-args] --artifactStore=<fully qualified class name>");
@@ -146,6 +152,7 @@ public class Main {
         sb.append("\n        validate: Discover missing artifacts and update the HarvestSkipURI table");
         sb.append("\n        diff: Discover and report missing artifacts");
         sb.append("\n\n    optional general args:");
+        sb.append("\n        -V | --version");
         sb.append("\n        -v | --verbose");
         sb.append("\n        -d | --debug");
         sb.append("\n        -h | --help");
