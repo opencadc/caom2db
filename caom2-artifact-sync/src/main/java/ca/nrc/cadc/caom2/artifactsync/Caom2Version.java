@@ -92,7 +92,7 @@ public class Caom2Version {
         if (values != null) {
             return values.get(0);
         } else {
-                return null;
+            return null;
         }
     }
 }
