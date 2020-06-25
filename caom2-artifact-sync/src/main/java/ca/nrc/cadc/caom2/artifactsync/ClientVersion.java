@@ -69,30 +69,47 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-import ca.nrc.cadc.util.PropertiesReader;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.MultiValuedProperties;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * A class to provide a method to obtain the version of the 
- * artifact-sync service. The version resides in the version.properties
+ * A class to provide a method to obtain the version of an 
+ * application. The version resides in the properties
  * file as a key/value pair.
  *
  * @author yeunga
  */
-public class Caom2Version {
+public class ClientVersion {
 
-    private static Logger log = Logger.getLogger(Caom2Version.class);
+    private static Logger log = Logger.getLogger(ClientVersion.class);
     private static final String VERSION_KEY = "Version";
-    private static final String VERSION_CONFIG = "version.properties";
-
-    public static String getVersion() {
-        PropertiesReader pr = new PropertiesReader(VERSION_CONFIG);
-        List<String> values = pr.getPropertyValues(VERSION_KEY);
-        if (values != null) {
-            return values.get(0);
-        } else {
-            return null;
+    
+    public static String getVersion(String filename) {
+        MultiValuedProperties properties = null;
+    	File versionFile = FileUtil.getFileFromResource(filename, Caom2ArtifactSync.class);
+        try {
+            InputStream in = new FileInputStream(versionFile);
+            properties = new MultiValuedProperties();
+            properties.load(in);
+        } catch (IOException e) {
+            // File could not be opened
+            properties = null;
         }
+
+        if (properties != null) {
+            List<String> values = properties.getProperty(VERSION_KEY);
+            if (values != null && values.size() > 0) {
+                return values.get(0);
+            }
+        }
+        
+        return null;
     }
 }

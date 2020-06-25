@@ -37,3 +37,10 @@ dependencies {
 }
 
 apply from: '../opencadc.gradle'
+
+jar {
+    doFirst {
+        mkdir "build/resources/main"
+        new File("build/resources/main", "artifact-sync.properties").text = """Version = $version"""
+    }
+}

@@ -85,6 +85,7 @@ import org.apache.log4j.Logger;
 public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
+    private static String VERSION_FILENAME = "artifact-sync.properties";
     private static Caom2ArtifactSync command;
 
     public static void main(String[] args) {
@@ -134,7 +135,7 @@ public class Main {
 
     private static void printVersion() {
         // get the version of artifact-sync service
-        String version = Caom2Version.getVersion();
+        String version = ClientVersion.getVersion(VERSION_FILENAME);
         if (version == null) {
             log.info("no version information available");
         } else {
