@@ -116,7 +116,11 @@ public class HarvestSkipURIDAO {
     public HarvestSkipURIDAO(DataSource dataSource, String database, String schema) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.dataSource = dataSource;
-        this.tableName = database + "." + schema + ".HarvestSkipURI";
+        if (database != null) {
+            this.tableName = database + "." + schema + ".HarvestSkipURI";
+        } else {
+            this.tableName = schema + ".HarvestSkipURI";
+        }
         this.extractor = new HarvestSkipMapper(Calendar.getInstance(DateUtil.UTC));
     }
 
