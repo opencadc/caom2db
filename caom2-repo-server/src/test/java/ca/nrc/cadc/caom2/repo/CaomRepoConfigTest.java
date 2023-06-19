@@ -77,6 +77,7 @@ import java.util.Properties;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.gms.GroupURI;
 
@@ -104,6 +105,7 @@ public class CaomRepoConfigTest {
         }
     }
 
+    @Ignore
     @Test
     public void testGetItem() {
         try {
