@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,68 +67,20 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package org.opencadc.caom2.repo.action;
 
-import ca.nrc.cadc.rest.SyncOutput;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.apache.log4j.Logger;
-
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 
 /**
- *
- * @author pdowler
+ * @author hjeeves
  */
-public class TestSyncOutput extends SyncOutput {
-    private int code;
-    private Map<String, Object> headers = new TreeMap<String, Object>();
-    private static final Logger log = Logger.getLogger(TestSyncOutput.class);
+public class GetAction23 extends GetAction {
 
-    public TestSyncOutput() {
-        super(null);
-    }
-
-    private OutputStream outputStream;
+    public GetAction23() { }
 
     @Override
-    public OutputStream getOutputStream() throws IOException {
-        if (outputStream == null) {
-            outputStream = new ByteArrayOutputStream();
-        }
-        return outputStream;
-    }
-
-    @Override
-    public boolean isOpen() {
-        return super.isOpen();
-    }
-
-    @Override
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    @Override
-    public void setHeader(String key, Object value) {
-        this.headers.put(key, value);
-    }
-
-    public String getContent() {
-        ByteArrayOutputStream myOut = (ByteArrayOutputStream) outputStream;
-        byte[] bytes = myOut.toByteArray();
-        return new String(bytes);
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public Map<String, Object> getHeaders() {
-        return headers;
+    protected ObservationWriter getObservationWriter() {
+        return new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
     }
 }

@@ -67,13 +67,13 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.repo.action;
+package org.opencadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
-import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.repo.PropertyAuthorizer;
+import org.opencadc.caom2.repo.CaomRepoConfig;
+import org.opencadc.caom2.repo.PropertyAuthorizer;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;

@@ -65,7 +65,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package org.opencadc.caom2.repo;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.access.AccessUtil;
@@ -74,8 +74,6 @@ import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.xml.ArtifactAccessWriter;
 import ca.nrc.cadc.dali.ParamExtractor;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.server.JobRunner;

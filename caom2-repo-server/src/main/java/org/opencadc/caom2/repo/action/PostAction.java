@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,130 +67,68 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package org.opencadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationResponse;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import com.csvreader.CsvWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.List;
+import ca.nrc.cadc.rest.InlineContentHandler;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class GetAction extends RepoAction {
+public class PostAction extends RepoAction {
+    private static final Logger log = Logger.getLogger(PostAction.class);
 
-    private static final Logger log = Logger.getLogger(GetAction.class);
-
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-
-    public GetAction() {
+    public PostAction() {
     }
 
     @Override
     public void doAction() throws Exception {
-        log.debug("GET ACTION");
         ObservationURI uri = getURI();
-        if (uri != null) {
-            doGetObservation(uri);
-            return;
-        } else if (getCollection() != null) {
-            InputParams ip = getInputParams();
-            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
-        } else {
-            // Responds to requests where no collection is provided.
-            // Returns list of all collections.
-            doGetCollectionList();
-        }
-    }
-
-    protected void doGetObservation(ObservationURI uri) throws Exception {
         log.debug("START: " + uri);
 
-        checkReadPermission();
+        checkWritePermission();
+
+        Observation obs = getInputObservation();
+
+        if (!uri.equals(obs.getURI())) {
+            throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
+        }
 
         ObservationDAO dao = getDAO();
-        ObservationResponse resp = dao.getObservationResponse(uri);
+        ObservationState s = dao.getState(obs.getID());
 
-        if (resp.error != null) {
-            throw resp.error;
-        }
-        if (resp.observation == null) {
+        if (s == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
-
-        ObservationWriter ow = getObservationWriter();
         
-        syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        syncOutput.setHeader("ETag", resp.observation.getAccMetaChecksum());
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(resp.observation, bc);
-        logInfo.setBytes(bc.getByteCount());
+        validate(obs);
+        
+        URI expectedMetaChecksum = null;
+        String condition = syncInput.getHeader("If-Match");
+        if (condition != null) {
+            condition = condition.trim();
+            try {
+                expectedMetaChecksum = new URI(condition);
+            } catch (URISyntaxException ex) {
+                throw new IllegalArgumentException("invalid If-Match value: " + condition, ex);
+            }
+        }
+
+        dao.put(obs, expectedMetaChecksum);
 
         log.debug("DONE: " + uri);
     }
 
-    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
-        log.debug("START: " + getCollection());
-
-        checkReadPermission();
-
-        ObservationDAO dao = getDAO();
-
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
-                isAscending);
-
-        if (states == null) {
-            throw new ResourceNotFoundException("Collection not found: " + getCollection());
-        }
-
-        long byteCount = writeObservationList(states);
-        logInfo.setBytes(byteCount);
-
-        log.debug("DONE: " + getCollection());
-    }
-
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter();
-    }
-
-    protected long writeObservationList(List<ObservationState> states) throws IOException {
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
-        
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
-        CsvWriter writer = new CsvWriter(out, '\t');
-        for (ObservationState state : states) {
-            writer.write(state.getURI().getCollection());
-            writer.write(state.getURI().getObservationID());
-            if (state.maxLastModified != null) {
-                writer.write(df.format(state.maxLastModified));
-            } else {
-                writer.write("");
-            }
-            if (state.accMetaChecksum != null) {
-                writer.write(state.accMetaChecksum.toASCIIString());
-            } else {
-                writer.write("");
-            }
-            writer.endRecord();
-        }
-        writer.flush();
-        return bc.getByteCount();
+    @Override
+    protected InlineContentHandler getInlineContentHandler() {
+        return new ObservationInlineContentHandler();
     }
 }

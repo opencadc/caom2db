@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package org.opencadc.caom2.repo;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;

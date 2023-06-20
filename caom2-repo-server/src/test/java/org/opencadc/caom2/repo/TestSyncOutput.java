@@ -67,69 +67,68 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package org.opencadc.caom2.repo;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.net.PreconditionFailedException;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.InlineContentHandler;
-import java.net.URI;
-import java.net.URISyntaxException;
+import ca.nrc.cadc.rest.SyncOutput;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.log4j.Logger;
+
 
 /**
  *
  * @author pdowler
  */
-public class PostAction extends RepoAction {
-    private static final Logger log = Logger.getLogger(PostAction.class);
+public class TestSyncOutput extends SyncOutput {
+    private int code;
+    private Map<String, Object> headers = new TreeMap<String, Object>();
+    private static final Logger log = Logger.getLogger(TestSyncOutput.class);
 
-    public PostAction() {
+    public TestSyncOutput() {
+        super(null);
+    }
+
+    private OutputStream outputStream;
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        if (outputStream == null) {
+            outputStream = new ByteArrayOutputStream();
+        }
+        return outputStream;
     }
 
     @Override
-    public void doAction() throws Exception {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
-
-        checkWritePermission();
-
-        Observation obs = getInputObservation();
-
-        if (!uri.equals(obs.getURI())) {
-            throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
-        }
-
-        ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(obs.getID());
-
-        if (s == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        
-        validate(obs);
-        
-        URI expectedMetaChecksum = null;
-        String condition = syncInput.getHeader("If-Match");
-        if (condition != null) {
-            condition = condition.trim();
-            try {
-                expectedMetaChecksum = new URI(condition);
-            } catch (URISyntaxException ex) {
-                throw new IllegalArgumentException("invalid If-Match value: " + condition, ex);
-            }
-        }
-
-        dao.put(obs, expectedMetaChecksum);
-
-        log.debug("DONE: " + uri);
+    public boolean isOpen() {
+        return super.isOpen();
     }
 
     @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new ObservationInlineContentHandler();
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    @Override
+    public void setHeader(String key, Object value) {
+        this.headers.put(key, value);
+    }
+
+    public String getContent() {
+        ByteArrayOutputStream myOut = (ByteArrayOutputStream) outputStream;
+        byte[] bytes = myOut.toByteArray();
+        return new String(bytes);
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public Map<String, Object> getHeaders() {
+        return headers;
     }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,20 +67,20 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package org.opencadc.caom2.repo;
 
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import org.apache.log4j.Logger;
 
 /**
- * @author hjeeves
+ *
+ * @author pdowler
  */
-public class GetAction23 extends GetAction {
+public class DummySQLGeneratorImpl extends SQLGenerator {
+    private static final Logger log = Logger.getLogger(DummySQLGeneratorImpl.class);
 
-    public GetAction23() { }
-
-    @Override
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
+    public DummySQLGeneratorImpl(String server, String database) {
+        super(server, database);
+        super.init();
     }
 }

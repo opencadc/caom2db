@@ -67,20 +67,30 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo;
+package org.opencadc.caom2.repo;
 
-import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.vosi.avail.CheckException;
+import ca.nrc.cadc.vosi.avail.CheckResource;
+import ca.nrc.cadc.wcs.VerifyWCS;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class DummySQLGeneratorImpl extends SQLGenerator {
-    private static final Logger log = Logger.getLogger(DummySQLGeneratorImpl.class);
+public class CheckWcsLib implements CheckResource {
+    private static Logger log = Logger.getLogger(CheckWcsLib.class);
 
-    public DummySQLGeneratorImpl(String server, String database) {
-        super(server, database);
-        super.init();
+    public CheckWcsLib() {
     }
+
+    public void check() throws CheckException {
+        try {
+            VerifyWCS ver = new VerifyWCS();
+            ver.run();
+        } catch (Throwable t) {
+            throw new CheckException("wcslib not available", t);
+        }
+    }
+
 }

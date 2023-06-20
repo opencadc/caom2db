@@ -67,14 +67,12 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package org.opencadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.repo.TestSyncOutput;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.RestServlet;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.security.AccessControlException;
@@ -85,6 +83,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.repo.TestSyncOutput;
 
 
 /**
