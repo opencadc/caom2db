@@ -97,10 +97,11 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
@@ -120,6 +121,7 @@ public abstract class RepoAction extends RestAction {
     protected boolean computeMetadata;
     // protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
     private String collection;
+    private Boolean hasCredentials;
     private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
     private transient DeletedEntityDAO deletedEntityDAO;
@@ -147,6 +149,14 @@ public abstract class RepoAction extends RestAction {
                 }
             }
         }
+    }
+
+    private Boolean hasCredentials()
+            throws CertificateNotYetValidException, CertificateExpiredException {
+        if (this.hasCredentials == null) {
+            this.hasCredentials = CredUtil.checkCredentials();
+        }
+        return this.hasCredentials;
     }
 
     // used by GetAction and GetDeletedAction
@@ -317,25 +327,35 @@ public abstract class RepoAction extends RestAction {
         log.debug("authorizing: " + grantURI);
 
         for (URI grantProvider : tc.getGrantProviders()) {
-            log.debug("grant provider: " + grantProvider);
-            PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
-            ReadGrant readGrant = permissionsClient.getReadGrant(grantURI);
-            if (readGrant != null) {
-                log.debug("read grant found");
-                if (readGrant.isAnonymousAccess()) {
-                    log.debug("anon grant found, authorized");
-                    return;
-                }
-            }
-        }
+            try {
+                log.debug("grant provider: " + grantProvider);
+                PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
+                ReadGrant readGrant = permissionsClient.getReadGrant(grantURI);
+                if (readGrant != null) {
+                    log.debug("read grant found");
 
-        try {
-            if (CredUtil.checkCredentials()) {
-                log.debug("checking write access");
-                for (URI grantProvider : tc.getGrantProviders()) {
-                    log.debug("grant provider: " + grantProvider);
-                    PermissionsClient pc = new PermissionsClient(grantProvider);
-                    WriteGrant writeGrant = pc.getWriteGrant(grantURI);
+                    // check anonymous access
+                    if (readGrant.isAnonymousAccess()) {
+                        log.debug("anon grant found, authorized");
+                        return;
+                    }
+
+                    // check read access
+                    if (hasCredentials()) {
+                        for (GroupURI groupURI : readGrant.getGroups()) {
+                            log.debug("read grant groupURI: " + groupURI);
+                            GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
+                            if (gmsClient.isMember(groupURI.getName())) {
+                                log.debug("membership found, authorized");
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                // check write access
+                if (hasCredentials()) {
+                    WriteGrant writeGrant = permissionsClient.getWriteGrant(grantURI);
                     if (writeGrant != null) {
                         log.debug("write grant found");
                         for (GroupURI groupURI : writeGrant.getGroups()) {
@@ -348,33 +368,15 @@ public abstract class RepoAction extends RestAction {
                         }
                     }
                 }
-
-                log.debug("checking read access");
-                for (URI grantProvider : tc.getGrantProviders()) {
-                    log.debug("grant provider: " + grantProvider);
-                    PermissionsClient pc = new PermissionsClient(grantProvider);
-                    ReadGrant readGrant = pc.getReadGrant(grantURI);
-                    if (readGrant != null) {
-                        log.debug("read grant found");
-                        for (GroupURI groupURI : readGrant.getGroups()) {
-                            log.debug("read grant groupURI: " + groupURI);
-                            GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
-                            if (gmsClient.isMember(groupURI.getName())) {
-                                log.debug("membership found, authorized");
-                                return;
-                            }
-                        }
-                    }
-                }
+            } catch (AccessControlException ex) {
+                log.debug(String.format("permission denied (credentials not found) for %s in %s",
+                        getCollection(), grantProvider));
+            } catch (UserNotFoundException ex) {
+                log.debug(String.format("permission denied (user not found) for %s in %s",
+                        getCollection(), grantProvider));
             }
-            log.debug("READ permission denied");
-        } catch (AccessControlException ex) {
-            throw new AccessControlException(
-                "permission denied (credentials not found): " + getCollection());
-        } catch (UserNotFoundException ex) {
-            throw new AccessControlException(
-                "permission denied (user not found): " + getCollection());
         }
+        log.debug("READ permission denied");
         throw new AccessControlException("permission denied: " + getCollection());
     }
 
@@ -410,10 +412,10 @@ public abstract class RepoAction extends RestAction {
         }
         log.debug("authorizing: " + grantURI);
 
-        try {
-            if (CredUtil.checkCredentials()) {
-                log.debug("checking write access");
-                for (URI grantProvider : tc.getGrantProviders()) {
+        if (hasCredentials()) {
+            log.debug("checking write access");
+            for (URI grantProvider : tc.getGrantProviders()) {
+                try {
                     log.debug("grant provider: " + grantProvider);
                     PermissionsClient pc = new PermissionsClient(grantProvider);
                     WriteGrant writeGrant = pc.getWriteGrant(grantURI);
@@ -428,17 +430,16 @@ public abstract class RepoAction extends RestAction {
                             }
                         }
                     }
+                } catch (AccessControlException ex) {
+                    log.debug(String.format("permission denied (credentials not found) for %s in %s",
+                            getCollection(), grantProvider));
+                } catch (UserNotFoundException ex) {
+                    log.debug(String.format("permission denied (user not found) for %s in %s",
+                            getCollection(), grantProvider));
                 }
             }
-            log.debug("WRITE permission denied");
-        } catch (AccessControlException ex) {
-            throw new AccessControlException(
-                "permission denied (credentials not found): " + getCollection());
-        } catch (UserNotFoundException ex) {
-            throw new AccessControlException(
-                "permission denied (user not found): " + getCollection());
         }
-
+        log.debug("WRITE permission denied");
         throw new AccessControlException("permission denied: " + getCollection());
     }
 
